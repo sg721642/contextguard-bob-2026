@@ -1,0 +1,125 @@
+:root {
+  --bg-void: #080A0E;
+  --bg-surface: #0F1117;
+  --bg-elevated: #161B25;
+  --amber: #FF8C00;
+  --amber-light: #FFB347;
+  --amber-dim: rgba(255,140,0,0.12);
+  --red-threat: #FF2D2D;
+  --red-dim: rgba(255,45,45,0.12);
+  --clear: #00FF87;
+  --clear-dim: rgba(0,255,135,0.12);
+  --orange-mid: #FF6B35;
+  --text-primary: #E8ECF4;
+  --text-dim: #5A6478;
+  --text-mono: #A0B0C8;
+  --border: #1E2533;
+  --border-amber: rgba(255,140,0,0.3);
+}
+
+body {
+  background: var(--bg-void);
+  color: var(--text-primary);
+  font-family: 'Inter', sans-serif;
+  margin: 0;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* Scanline overlay on body */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-image: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(255,140,0,0.012) 2px,
+    rgba(255,140,0,0.012) 4px
+  );
+  pointer-events: none;
+  z-index: 9999;
+}
+
+/* Scrollbar styles to match the theme */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-void);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-dim);
+}
+
+/* Typography styles */
+.mono { font-family: 'JetBrains Mono', monospace; }
+.display { font-family: 'Space Grotesk', sans-serif; }
+
+/* Decision badges */
+.badge {
+  padding: 3px 10px;
+  border-radius: 3px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  display: inline-block;
+}
+.badge-clear { background: var(--clear-dim); color: var(--clear); border: 1px solid rgba(0,255,135,0.4); }
+.badge-step { background: var(--amber-dim); color: var(--amber); border: 1px solid var(--border-amber); }
+.badge-review { background: rgba(255,107,53,0.12); color: var(--orange-mid); border: 1px solid rgba(255,107,53,0.4); }
+.badge-block { background: var(--red-dim); color: var(--red-threat); border: 1px solid rgba(255,45,45,0.4); }
+
+/* Animation keyframes for pulsing dots */
+@keyframes pulse-amber {
+  0% { opacity: 0.3; }
+  50% { opacity: 1; }
+  100% { opacity: 0.3; }
+}
+
+@keyframes pulse-red {
+  0% { opacity: 0.4; transform: scale(0.9); }
+  50% { opacity: 1; transform: scale(1.1); }
+  100% { opacity: 0.4; transform: scale(0.9); }
+}
+
+.pulse-amber-dot {
+  width: 8px;
+  height: 8px;
+  background-color: var(--amber);
+  border-radius: 50%;
+  display: inline-block;
+  margin-right: 10px;
+  animation: pulse-amber 1.5s infinite ease-in-out;
+}
+
+.pulse-red-dot {
+  width: 8px;
+  height: 8px;
+  background-color: var(--red-threat);
+  border-radius: 50%;
+  display: inline-block;
+  margin-right: 6px;
+  animation: pulse-red 1.2s infinite ease-in-out;
+}
+
+/* Threat Feed Flash animation on insert */
+@keyframes flash-new-row {
+  0% { background-color: rgba(255,140,0,0.4); }
+  100% { background-color: transparent; }
+}
+
+.flash-row {
+  animation: flash-new-row 1.5s ease-out;
+}

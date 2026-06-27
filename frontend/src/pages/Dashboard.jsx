@@ -50,6 +50,67 @@ const initialFakeEvents = Array.from({ length: 50 }, () => {
   return evt;
 });
 
+const getShapSignals = (evtData) => {
+  const shapList = [];
+  
+  if (evtData.device_risk_score > 0) {
+    shapList.push({
+      name: 'DEVICE TRUST',
+      points: evtData.device_risk_score,
+      color: 'var(--red-threat)',
+      label: evtData.is_new_device ? 'Unrecognized device detected' : 'Device risk elevated',
+      width: Math.round(evtData.device_risk_score)
+    });
+  }
+  if (evtData.location_risk_score > 0) {
+    shapList.push({
+      name: 'LOCATION RISK',
+      points: evtData.location_risk_score,
+      color: 'var(--orange-mid)',
+      label: `Login from ${evtData.city || 'unknown location'}`,
+      width: Math.round(evtData.location_risk_score)
+    });
+  }
+  if (evtData.behavioral_risk_score > 0) {
+    shapList.push({
+      name: 'BEHAVIORAL',
+      points: evtData.behavioral_risk_score,
+      color: 'var(--amber)',
+      label: `Keystroke variance: ${evtData.keystroke_variance_ms}ms`,
+      width: Math.round(evtData.behavioral_risk_score)
+    });
+  }
+  if (evtData.time_risk_score > 0) {
+    shapList.push({
+      name: 'TIME RISK',
+      points: evtData.time_risk_score,
+      color: 'var(--amber)',
+      label: `Suspicious login hour: ${evtData.login_hour}:00`,
+      width: Math.round(evtData.time_risk_score)
+    });
+  }
+  if (evtData.transaction_risk_score > 0) {
+    shapList.push({
+      name: 'TRANSACTION',
+      points: evtData.transaction_risk_score,
+      color: 'var(--amber)',
+      label: `Transaction amount risk`,
+      width: Math.round(evtData.transaction_risk_score)
+    });
+  }
+  if (evtData.recovery_risk_score > 0) {
+    shapList.push({
+      name: 'RECOVERY RISK',
+      points: evtData.recovery_risk_score,
+      color: 'var(--amber)',
+      label: `Recovery attempt risk`,
+      width: Math.round(evtData.recovery_risk_score)
+    });
+  }
+
+  return shapList.sort((a, b) => b.points - a.points);
+};
+
 export default function Dashboard() {
   const [events, setEvents] = useState(initialFakeEvents);
   const [stats, setStats] = useState({
@@ -465,18 +526,35 @@ export default function Dashboard() {
                         ? (evt.flashColor === 'green' ? 'flash-green-row' : evt.flashColor === 'red' ? 'flash-red-row' : 'flash-row') 
                         : ''
                     }
-                    onClick={() => {
+                    onClick={async () => {
                       if (evt.decision === 'HUMAN_REVIEW') {
-                        setModalEvent({
-                          eventId: evt.event_id,
-                          userId: evt.user_id,
-                          riskScore: evt.final_risk_score,
-                          signals: [
-                            { name: 'DEVICE TRUST',  points: 28.4, color: 'var(--red-threat)',  label: 'Unrecognized device detected',   width: 88 },
-                            { name: 'LOCATION RISK', points: 22.1, color: 'var(--orange-mid)',  label: `Login from ${evt.city || 'unknown city'}`, width: 68 },
-                            { name: 'BEHAVIORAL',    points: 14.7, color: 'var(--amber)',       label: 'Keystroke similarity degraded',   width: 46 }
-                          ]
-                        });
+                        try {
+                          const res = await fetch(`${API_BASE}/event/${evt.event_id}`);
+                          if (res.ok) {
+                            const fullEvt = await res.json();
+                            const dynamicSignals = getShapSignals(fullEvt);
+                            setModalEvent({
+                              eventId: fullEvt.event_id,
+                              userId: fullEvt.user_id,
+                              riskScore: fullEvt.final_risk_score,
+                              signals: dynamicSignals
+                            });
+                          } else {
+                            throw new Error();
+                          }
+                        } catch (err) {
+                          console.error("Error fetching event details for SHAP explanation, using fallback:", err);
+                          setModalEvent({
+                            eventId: evt.event_id,
+                            userId: evt.user_id,
+                            riskScore: evt.final_risk_score,
+                            signals: [
+                              { name: 'DEVICE TRUST',  points: 28.4, color: 'var(--red-threat)',  label: 'Unrecognized device detected',   width: 88 },
+                              { name: 'LOCATION RISK', points: 22.1, color: 'var(--orange-mid)',  label: `Login from ${evt.city || 'unknown city'}`, width: 68 },
+                              { name: 'BEHAVIORAL',    points: 14.7, color: 'var(--amber)',       label: 'Keystroke similarity degraded',   width: 46 }
+                            ]
+                          });
+                        }
                       }
                     }}
                     style={{

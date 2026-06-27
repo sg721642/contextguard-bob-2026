@@ -392,6 +392,55 @@ def dashboard_stats():
         clear_percentage=clear_percentage
     )
 
+@app.get("/api/v1/event/{event_id}", response_model=UserHistoryEvent)
+def get_event_details(event_id: str):
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT event_id, user_id, timestamp, login_hour, ip_address, city,
+                   is_new_device, keystroke_variance_ms, location_risk_score,
+                   device_risk_score, time_risk_score, behavioral_risk_score,
+                   transaction_risk_score, recovery_risk_score, final_risk_score,
+                   decision, top_signal, is_confirmed_fraud
+            FROM risk_events
+            WHERE event_id = ?
+        """, (event_id,))
+        r = cursor.fetchone()
+        conn.close()
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Database read error: {e}"
+        )
+
+    if not r:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Event {event_id} not found."
+        )
+
+    return UserHistoryEvent(
+        event_id=r[0],
+        user_id=r[1],
+        timestamp=r[2].replace(" ", "T"),
+        login_hour=r[3],
+        ip_address=r[4],
+        city=r[5] if r[5] else None,
+        is_new_device=bool(r[6]),
+        keystroke_variance_ms=r[7],
+        location_risk_score=r[8],
+        device_risk_score=r[9],
+        time_risk_score=r[10],
+        behavioral_risk_score=r[11],
+        transaction_risk_score=r[12],
+        recovery_risk_score=r[13],
+        final_risk_score=r[14],
+        decision=r[15],
+        top_signal=r[16],
+        is_confirmed_fraud=bool(r[17])
+    )
+
 @app.get("/api/v1/user/{user_id}/history", response_model=List[UserHistoryEvent])
 def user_history(user_id: str):
     try:

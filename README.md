@@ -184,7 +184,7 @@ Open `http://localhost:5173` to access the ContextGuard SOC Console.
 ---
 
 ## Team
-* **Team Antigravity** — Bank of Baroda PSB Hackathon 2026
+* **Team Sentinel** — Bank of Baroda PSB Hackathon 2026
 
 ---
 *ContextGuard — Trust is not a password. Trust is a pattern.*

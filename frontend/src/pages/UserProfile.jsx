@@ -192,8 +192,15 @@ account takeover post-credential compromise.`;
             User Profiles
           </span>
         </div>
-        <img src="/bob-logo.png" alt="Bank of Baroda" style={{ height: '28px', objectFit: 'contain' }}
-          onError={e => { e.target.style.display = 'none'; }} />
+        {/* Consistent official BoB logo SVG */}
+        <svg width="48" height="48" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ flexShrink: 0 }}>
+          <path d="M45 22 L15 25 L45 34 Z" fill="#FF6A13" />
+          <path d="M45 36 L8 47 L45 56 Z" fill="#FF6A13" />
+          <path d="M45 58 L5 70 L45 78 Z" fill="#FF6A13" />
+          <path d="M45 80 L10 91 L45 98 Z" fill="#FF6A13" />
+          <path d="M45 100 L20 109 L45 112 Z" fill="#FF6A13" />
+          <path fillRule="evenodd" clipRule="evenodd" d="M45,15 h35 c12,0 20,8 20,20 c0,11 -8,19 -20,19 h-35 Z M60,27 h17 c6,0 10,3 10,8 c0,5 -4,8 -10,8 h-17 Z M45,54 h40 c12,0 20,8 20,21 c0,13 -8,21 -20,21 h-40 Z M60,66 h22 c6,0 10,4 10,9 c0,5 -4,9 -10,9 h-22 Z" fill="#FF6A13" />
+        </svg>
       </header>
 
       {/* ── BODY ──────────────────────────────────────────────── */}

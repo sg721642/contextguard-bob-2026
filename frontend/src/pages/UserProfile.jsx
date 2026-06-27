@@ -1,81 +1,77 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import {
-  ResponsiveContainer,
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip as ChartTooltip,
-  ReferenceLine
+  ResponsiveContainer, LineChart, Line, XAxis, YAxis,
+  CartesianGrid, Tooltip as ChartTooltip, ReferenceLine
 } from 'recharts';
 
 const API_BASE = 'https://contextguard-backend.onrender.com/api/v1';
 
-// 30 days of data telling a story: mostly green/amber (0-55) with 2-3 recent red spikes (85-98)
 const dnaData = [
-  { date: "2026-05-29", score: 12 },
-  { date: "2026-05-30", score: 18 },
-  { date: "2026-05-31", score: 25 },
-  { date: "2026-06-01", score: 14 },
-  { date: "2026-06-02", score: 9 },
-  { date: "2026-06-03", score: 11 },
-  { date: "2026-06-04", score: 32 },
-  { date: "2026-06-05", score: 28 },
-  { date: "2026-06-06", score: 15 },
-  { date: "2026-06-07", score: 19 },
-  { date: "2026-06-08", score: 45 },
-  { date: "2026-06-09", score: 22 },
-  { date: "2026-06-10", score: 16 },
-  { date: "2026-06-11", score: 13 },
-  { date: "2026-06-12", score: 38 },
-  { date: "2026-06-13", score: 24 },
-  { date: "2026-06-14", score: 15 },
-  { date: "2026-06-15", score: 21 },
-  { date: "2026-06-16", score: 30 },
-  { date: "2026-06-17", score: 11 },
-  { date: "2026-06-18", score: 42 },
-  { date: "2026-06-19", score: 29 },
-  { date: "2026-06-20", score: 17 },
-  { date: "2026-06-21", score: 20 },
-  { date: "2026-06-22", score: 35 },
-  { date: "2026-06-23", score: 92 }, // Spike
-  { date: "2026-06-24", score: 15 },
-  { date: "2026-06-25", score: 88 }, // Spike
-  { date: "2026-06-26", score: 42 },
-  { date: "2026-06-27", score: 95 }  // Spike (today)
+  { date: "2026-05-29", score: 12 }, { date: "2026-05-30", score: 18 },
+  { date: "2026-05-31", score: 25 }, { date: "2026-06-01", score: 14 },
+  { date: "2026-06-02", score: 9  }, { date: "2026-06-03", score: 11 },
+  { date: "2026-06-04", score: 32 }, { date: "2026-06-05", score: 28 },
+  { date: "2026-06-06", score: 15 }, { date: "2026-06-07", score: 19 },
+  { date: "2026-06-08", score: 45 }, { date: "2026-06-09", score: 22 },
+  { date: "2026-06-10", score: 16 }, { date: "2026-06-11", score: 13 },
+  { date: "2026-06-12", score: 38 }, { date: "2026-06-13", score: 24 },
+  { date: "2026-06-14", score: 15 }, { date: "2026-06-15", score: 21 },
+  { date: "2026-06-16", score: 30 }, { date: "2026-06-17", score: 11 },
+  { date: "2026-06-18", score: 42 }, { date: "2026-06-19", score: 29 },
+  { date: "2026-06-20", score: 17 }, { date: "2026-06-21", score: 20 },
+  { date: "2026-06-22", score: 35 }, { date: "2026-06-23", score: 92 },
+  { date: "2026-06-24", score: 15 }, { date: "2026-06-25", score: 88 },
+  { date: "2026-06-26", score: 42 }, { date: "2026-06-27", score: 95 },
 ];
 
-// 15 event log rows matching the story
 const initialEventLogs = [
-  { date: "2026-06-27 02:34:17", city: "Jaipur", device: "New Device", score: 95, decision: "BLOCK", action: "ACCOUNT_FROZEN" },
-  { date: "2026-06-26 14:12:05", city: "Mumbai", device: "Trusted Device", score: 42, decision: "STEP_UP", action: "MFA_PROMPTED" },
-  { date: "2026-06-25 23:44:12", city: "Jaipur", device: "New Device", score: 88, decision: "HUMAN_REVIEW", action: "QUEUE_PENDING" },
-  { date: "2026-06-24 10:30:19", city: "Mumbai", device: "Trusted Device", score: 15, decision: "CLEAR", action: "BYPASSED" },
-  { date: "2026-06-23 03:15:22", city: "Kolkata", device: "New Device", score: 92, decision: "BLOCK", action: "REQUIRE_KYC" },
-  { date: "2026-06-22 17:40:11", city: "Mumbai", device: "Trusted Device", score: 35, decision: "CLEAR", action: "BYPASSED" },
-  { date: "2026-06-21 09:12:33", city: "Mumbai", device: "Trusted Device", score: 20, decision: "CLEAR", action: "BYPASSED" },
-  { date: "2026-06-20 12:45:00", city: "Mumbai", device: "Trusted Device", score: 17, decision: "CLEAR", action: "BYPASSED" },
-  { date: "2026-06-19 14:02:18", city: "Mumbai", device: "Trusted Device", score: 29, decision: "CLEAR", action: "BYPASSED" },
-  { date: "2026-06-18 20:30:55", city: "Mumbai", device: "Trusted Device", score: 42, decision: "STEP_UP", action: "MFA_PROMPTED" },
-  { date: "2026-06-17 11:22:40", city: "Mumbai", device: "Trusted Device", score: 11, decision: "CLEAR", action: "BYPASSED" },
-  { date: "2026-06-16 16:55:04", city: "Mumbai", device: "Trusted Device", score: 30, decision: "CLEAR", action: "BYPASSED" },
-  { date: "2026-06-15 08:04:12", city: "Mumbai", device: "Trusted Device", score: 21, decision: "CLEAR", action: "BYPASSED" },
-  { date: "2026-06-14 13:40:22", city: "Mumbai", device: "Trusted Device", score: 15, decision: "CLEAR", action: "BYPASSED" },
-  { date: "2026-06-13 10:11:59", city: "Mumbai", device: "Trusted Device", score: 24, decision: "CLEAR", action: "BYPASSED" }
+  { date: "2026-06-27 02:34:17", city: "Jaipur",  device: "New Device",     score: 95, decision: "BLOCK",        action: "ACCOUNT_FROZEN"    },
+  { date: "2026-06-26 14:12:05", city: "Mumbai",  device: "Trusted Device",  score: 42, decision: "STEP_UP",      action: "MFA_PROMPTED"       },
+  { date: "2026-06-25 23:44:12", city: "Jaipur",  device: "New Device",     score: 88, decision: "HUMAN_REVIEW",  action: "QUEUE_PENDING"      },
+  { date: "2026-06-24 10:30:19", city: "Mumbai",  device: "Trusted Device",  score: 15, decision: "CLEAR",        action: "BYPASSED"           },
+  { date: "2026-06-23 03:15:22", city: "Kolkata", device: "New Device",     score: 92, decision: "BLOCK",        action: "REQUIRE_KYC"        },
+  { date: "2026-06-22 17:40:11", city: "Mumbai",  device: "Trusted Device",  score: 35, decision: "CLEAR",        action: "BYPASSED"           },
+  { date: "2026-06-21 09:12:33", city: "Mumbai",  device: "Trusted Device",  score: 20, decision: "CLEAR",        action: "BYPASSED"           },
+  { date: "2026-06-20 12:45:00", city: "Mumbai",  device: "Trusted Device",  score: 17, decision: "CLEAR",        action: "BYPASSED"           },
+  { date: "2026-06-19 14:02:18", city: "Mumbai",  device: "Trusted Device",  score: 29, decision: "CLEAR",        action: "BYPASSED"           },
+  { date: "2026-06-18 20:30:55", city: "Mumbai",  device: "Trusted Device",  score: 42, decision: "STEP_UP",      action: "MFA_PROMPTED"       },
+  { date: "2026-06-17 11:22:40", city: "Mumbai",  device: "Trusted Device",  score: 11, decision: "CLEAR",        action: "BYPASSED"           },
+  { date: "2026-06-16 16:55:04", city: "Mumbai",  device: "Trusted Device",  score: 30, decision: "CLEAR",        action: "BYPASSED"           },
+  { date: "2026-06-15 08:04:12", city: "Mumbai",  device: "Trusted Device",  score: 21, decision: "CLEAR",        action: "BYPASSED"           },
+  { date: "2026-06-14 13:40:22", city: "Mumbai",  device: "Trusted Device",  score: 15, decision: "CLEAR",        action: "BYPASSED"           },
+  { date: "2026-06-13 10:11:59", city: "Mumbai",  device: "Trusted Device",  score: 24, decision: "CLEAR",        action: "BYPASSED"           },
 ];
 
-export default function UserProfile({ userId }) {
-  const { userId: routeUserId } = useParams();
-  const currentUserId = routeUserId || userId || "USR-4721";
+const getScoreColor = (s) => {
+  if (s <= 30) return 'var(--status-green)';
+  if (s <= 60) return 'var(--status-amber)';
+  if (s <= 85) return 'var(--status-orange)';
+  return 'var(--status-red)';
+};
 
-  // State to simulate UI reactions
-  const [trustLevel, setTrustLevel] = useState("FLAGGED");
+const getDecisionBadgeClass = (d) => {
+  if (d === 'CLEAR') return 'badge-clear';
+  if (d === 'STEP_UP') return 'badge-step';
+  if (d === 'HUMAN_REVIEW') return 'badge-review';
+  return 'badge-block';
+};
+
+const getTrustConfig = (level) => {
+  if (level === 'TRUSTED')   return { cls: 'badge-clear',  label: 'Trusted',   color: 'var(--status-green)' };
+  if (level === 'MONITORED') return { cls: 'badge-step',   label: 'Monitored', color: 'var(--status-amber)' };
+  return                             { cls: 'badge-block', label: 'Flagged',   color: 'var(--status-red)' };
+};
+
+export default function UserProfile() {
+  const { userId: routeUserId } = useParams();
+  const currentUserId = routeUserId || 'USR-4721';
+
+  const [trustLevel, setTrustLevel] = useState('FLAGGED');
   const [logs, setLogs] = useState(initialEventLogs);
   const [dynamicDna, setDynamicDna] = useState(dnaData);
   const [confidence, setConfidence] = useState(0.87);
-  const [sourceModel, setSourceModel] = useState("Gemini 2.5 Flash");
+  const [sourceModel, setSourceModel] = useState('Gemini 2.5 Flash');
 
   const staticNarrative = `ANALYSIS TIMESTAMP: 2026-06-27 02:34:17 IST
 SUBJECT: ${currentUserId} | RISK LEVEL: ELEVATED
@@ -92,47 +88,32 @@ account takeover post-credential compromise.`;
   useEffect(() => {
     const loadUserData = async () => {
       try {
-        // Fetch user history
         const historyRes = await fetch(`${API_BASE}/user/${currentUserId}/history`);
         if (historyRes.ok) {
           const historyData = await historyRes.json();
           if (historyData.length > 0) {
-            // Map backend events to table logs
             const mappedLogs = historyData.map(e => ({
               date: e.timestamp.replace('T', ' '),
               city: e.city || 'Unknown',
               device: e.is_new_device ? 'New Device' : 'Trusted Device',
               score: e.final_risk_score,
               decision: e.decision,
-              action: e.decision === 'BLOCK' ? 'ACCOUNT_FROZEN' :
-                      e.decision === 'HUMAN_REVIEW' ? 'QUEUE_PENDING' :
-                      e.decision === 'STEP_UP' ? 'MFA_PROMPTED' : 'BYPASSED'
+              action: e.decision === 'BLOCK' ? 'ACCOUNT_FROZEN' : e.decision === 'HUMAN_REVIEW' ? 'QUEUE_PENDING' : e.decision === 'STEP_UP' ? 'MFA_PROMPTED' : 'BYPASSED'
             }));
             setLogs(mappedLogs);
-
-            // Map recent scores for dnaData (chronological order)
             const sortedHistory = [...historyData].reverse();
-            const mappedDna = sortedHistory.map(e => ({
-              date: e.timestamp.split('T')[0],
-              score: e.final_risk_score
-            }));
-            // pad with some static dates if length < 10 for visuals
+            const mappedDna = sortedHistory.map(e => ({ date: e.timestamp.split('T')[0], score: e.final_risk_score }));
             if (mappedDna.length < 10) {
-              const padding = dnaData.slice(0, 10 - mappedDna.length);
-              setDynamicDna([...padding, ...mappedDna]);
+              setDynamicDna([...dnaData.slice(0, 10 - mappedDna.length), ...mappedDna]);
             } else {
               setDynamicDna(mappedDna);
             }
-
-            // Determine current trust level from latest event
             const latest = historyData[0];
-            if (latest.final_risk_score >= 86) setTrustLevel("FLAGGED");
-            else if (latest.final_risk_score >= 61) setTrustLevel("MONITORED");
-            else setTrustLevel("TRUSTED");
+            if (latest.final_risk_score >= 86) setTrustLevel('FLAGGED');
+            else if (latest.final_risk_score >= 61) setTrustLevel('MONITORED');
+            else setTrustLevel('TRUSTED');
           }
         }
-
-        // Fetch user narrative assessment
         const analyzeRes = await fetch(`${API_BASE}/user/${currentUserId}/analyze`);
         if (analyzeRes.ok) {
           const analyzeData = await analyzeRes.json();
@@ -141,445 +122,294 @@ account takeover post-credential compromise.`;
           setSourceModel(analyzeData.source === 'gemini-2.0-flash' ? 'Gemini 2.5 Flash' : 'Rule-Based Engine');
         }
       } catch (err) {
-        console.error("Error fetching user data from backend:", err);
+        console.error('Error fetching user data:', err);
       }
     };
     loadUserData();
   }, [currentUserId]);
 
-  // Masked User ID representation: e.g. "USR-****4721"
   const getMaskedId = (uid) => {
-    const rawNum = uid.replace("USR-", "");
-    if (rawNum.length > 4) {
-      return `USR-****${rawNum.substring(rawNum.length - 4)}`;
-    }
-    return `USR-****${rawNum}`;
-  };
-
-  // Helper colors for DNA boxes
-  const getColorForScore = (score) => {
-    if (score <= 30) return 'var(--clear)';       // Green
-    if (score <= 60) return 'var(--amber)';       // Amber
-    if (score <= 85) return 'var(--orange-mid)';   // Orange
-    return 'var(--red-threat)';                  // Red
-  };
-
-  const getDecisionBorder = (decision) => {
-    switch (decision) {
-      case 'CLEAR': return '3px solid var(--clear)';
-      case 'STEP_UP': return '3px solid var(--amber)';
-      case 'HUMAN_REVIEW': return '3px solid var(--orange-mid)';
-      case 'BLOCK': return '3px solid var(--red-threat)';
-      default: return '3px solid var(--border)';
-    }
+    const rawNum = uid.replace('USR-', '');
+    return rawNum.length > 4 ? `USR-****${rawNum.substring(rawNum.length - 4)}` : `USR-****${rawNum}`;
   };
 
   const handleAction = (actionType) => {
+    const nowStr = new Date().toISOString().replace('T', ' ').substring(0, 19);
     if (actionType === 'CLEAR') {
-      setTrustLevel("TRUSTED");
-      // Add simulated clear action at top of event logs
-      const nowStr = new Date().toISOString().replace('T', ' ').substring(0, 19);
-      const newLog = {
-        date: nowStr,
-        city: "Mumbai",
-        device: "Trusted Device",
-        score: 10,
-        decision: "CLEAR",
-        action: "ADMIN_OVERRIDE_CLEAR"
-      };
-      setLogs(prev => [newLog, ...prev]);
+      setTrustLevel('TRUSTED');
+      setLogs(prev => [{ date: nowStr, city: 'Mumbai', device: 'Trusted Device', score: 10, decision: 'CLEAR', action: 'ADMIN_OVERRIDE_CLEAR' }, ...prev]);
     } else if (actionType === 'KYC') {
-      setTrustLevel("MONITORED");
-      const nowStr = new Date().toISOString().replace('T', ' ').substring(0, 19);
-      const newLog = {
-        date: nowStr,
-        city: "Mumbai",
-        device: "Trusted Device",
-        score: 45,
-        decision: "STEP_UP",
-        action: "REQUIRED_VIDEO_KYC"
-      };
-      setLogs(prev => [newLog, ...prev]);
+      setTrustLevel('MONITORED');
+      setLogs(prev => [{ date: nowStr, city: 'Mumbai', device: 'Trusted Device', score: 45, decision: 'STEP_UP', action: 'REQUIRED_VIDEO_KYC' }, ...prev]);
     } else if (actionType === 'FREEZE') {
-      setTrustLevel("FLAGGED");
-      const nowStr = new Date().toISOString().replace('T', ' ').substring(0, 19);
-      const newLog = {
-        date: nowStr,
-        city: "Jaipur",
-        device: "New Device",
-        score: 98,
-        decision: "BLOCK",
-        action: "FORCE_ACCOUNT_FREEZE"
-      };
-      setLogs(prev => [newLog, ...prev]);
+      setTrustLevel('FLAGGED');
+      setLogs(prev => [{ date: nowStr, city: 'Jaipur', device: 'New Device', score: 98, decision: 'BLOCK', action: 'FORCE_ACCOUNT_FREEZE' }, ...prev]);
     }
   };
 
+  const trustCfg = getTrustConfig(trustLevel);
+
   return (
-    <div style={{
-      height: '100vh',
-      display: 'flex',
-      flexDirection: 'column',
-      backgroundColor: 'var(--bg-void)',
-      overflowY: 'auto',
-      padding: '24px',
-      gap: '24px'
-    }}>
-      
-      {/* Inline styles for hover tooltips & blinking cursors */}
+    <div style={{ minHeight: '100vh', background: 'var(--bg-page)', display: 'flex', flexDirection: 'column' }}>
       <style>{`
-        .dna-rect-wrapper {
-          position: relative;
-          display: inline-block;
-        }
-        .dna-rect-tooltip {
-          position: absolute;
-          bottom: 100%;
-          left: 50%;
+        .dna-cell { position: relative; display: inline-block; }
+        .dna-tip {
+          position: absolute; bottom: calc(100% + 6px); left: 50%;
           transform: translateX(-50%);
-          margin-bottom: 6px;
-          padding: 6px 10px;
-          background-color: var(--bg-surface);
-          border: 1px solid var(--border);
-          color: var(--text-primary);
-          font-family: 'JetBrains Mono', monospace;
-          font-size: 10px;
-          white-space: nowrap;
-          pointer-events: none;
-          opacity: 0;
-          transition: opacity 0.15s ease-in-out;
-          z-index: 1000;
+          background: var(--bg-card); border: 1px solid var(--border);
+          border-radius: 6px; padding: 5px 9px;
+          font-size: 11px; color: var(--text-primary); white-space: nowrap;
+          pointer-events: none; opacity: 0; transition: opacity 0.15s;
+          box-shadow: var(--shadow-md); z-index: 100;
         }
-        .dna-rect-wrapper:hover .dna-rect-tooltip {
-          opacity: 1;
-        }
-        @keyframes blink-cursor {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0; }
-        }
-        .blinking-cursor {
-          animation: blink-cursor 0.8s step-start infinite;
-          color: var(--amber);
-        }
+        .dna-cell:hover .dna-tip { opacity: 1; }
+        @keyframes blink-cursor { 0%,100%{opacity:1} 50%{opacity:0} }
+        .blink { animation: blink-cursor 0.9s step-start infinite; color: var(--accent); }
       `}</style>
 
-      {/* HEADER SECTION */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <Link to="/" style={{ color: 'var(--text-dim)', textDecoration: 'none', display: 'flex', alignItems: 'center' }}>
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="square" strokeLinejoin="miter">
-              <line x1="19" y1="12" x2="5" y2="12" />
-              <polyline points="12 19 5 12 12 5" />
-            </svg>
+      {/* ── HEADER ────────────────────────────────────────────── */}
+      <header className="glass" style={{
+        height: 'var(--header-height)', position: 'sticky', top: 0, zIndex: 100,
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        padding: '0 28px', flexShrink: 0, boxShadow: '0 1px 0 rgba(0,0,0,0.06)',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+          <Link to="/" style={{
+            display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-secondary)',
+            textDecoration: 'none', fontSize: '13px', fontWeight: '500',
+            padding: '6px 10px', borderRadius: '7px', border: '1px solid var(--border)',
+            background: 'var(--bg-card-alt)', transition: 'all 0.15s',
+          }}
+            onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-primary)'; }}
+            onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-secondary)'; }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+            Dashboard
           </Link>
-          <span className="mono" style={{ fontSize: '11px', color: 'var(--text-mono)' }}>|</span>
-          <span className="display" style={{ fontSize: '24px', fontWeight: '700', color: 'var(--amber)' }}>
-            {getMaskedId(currentUserId)}
+          <span style={{ color: 'var(--border-strong)' }}>/</span>
+          <span style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-primary)', fontFamily: "'Space Grotesk', sans-serif" }}>
+            User Profile
           </span>
         </div>
+        <img src="/bob-logo.png" alt="Bank of Baroda" style={{ height: '28px', objectFit: 'contain' }}
+          onError={e => { e.target.style.display = 'none'; }} />
+      </header>
 
-        <div>
-          {trustLevel === "TRUSTED" && (
-            <span className="badge" style={{ fontSize: '14px', padding: '6px 16px', backgroundColor: 'var(--clear-dim)', color: 'var(--clear)', border: '1px solid var(--clear)' }}>
-              TRUSTED
-            </span>
-          )}
-          {trustLevel === "MONITORED" && (
-            <span className="badge" style={{ fontSize: '14px', padding: '6px 16px', backgroundColor: 'var(--amber-dim)', color: 'var(--amber)', border: '1px solid var(--amber)' }}>
-              MONITORED
-            </span>
-          )}
-          {trustLevel === "FLAGGED" && (
-            <span className="badge" style={{ fontSize: '14px', padding: '6px 16px', backgroundColor: 'var(--red-dim)', color: 'var(--red-threat)', border: '1px solid var(--red-threat)' }}>
-              FLAGGED
-            </span>
-          )}
-        </div>
-      </div>
+      {/* ── BODY ──────────────────────────────────────────────── */}
+      <main style={{ flex: 1, padding: '24px 28px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
 
-      {/* ACCOUNT INFO SUBHEADER */}
-      <div className="mono" style={{
-        fontSize: '11px',
-        color: 'var(--text-dim)',
-        borderBottom: '1px solid var(--border)',
-        paddingBottom: '14px',
-        flexShrink: 0
-      }}>
-        Account age: 847 days &nbsp;|&nbsp; Home city: Mumbai &nbsp;|&nbsp; Normal hours: 9AM–7PM
-      </div>
-
-      {/* DNA STRAND SECTION */}
-      <div style={{
-        backgroundColor: 'var(--bg-surface)',
-        border: '1px solid var(--border)',
-        padding: '20px',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '12px',
-        flexShrink: 0
-      }}>
-        <h4 className="mono" style={{ fontSize: '11px', color: 'var(--amber)', margin: 0, fontWeight: 'bold', letterSpacing: '0.05em' }}>
-          30-DAY TRUST HISTORY
-        </h4>
-        <div style={{ display: 'flex', gap: '3px', flexWrap: 'wrap' }}>
-          {dynamicDna.map((item, idx) => (
-            <div key={idx} className="dna-rect-wrapper">
-              <div style={{
-                width: '18px',
-                height: '32px',
-                backgroundColor: getColorForScore(item.score)
-              }} />
-              <div className="dna-rect-tooltip">
-                {item.date} | Score: {item.score}
+        {/* User Title Row */}
+        <div style={{
+          background: 'var(--bg-card)', border: '1px solid var(--border)',
+          borderRadius: 'var(--radius-md)', padding: '20px 24px',
+          boxShadow: 'var(--shadow-sm)',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <div style={{
+              width: '52px', height: '52px', borderRadius: '50%',
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: '18px', fontWeight: '700', color: '#fff',
+            }}>
+              {currentUserId.replace('USR-', '').substring(0, 2)}
+            </div>
+            <div>
+              <div style={{ fontSize: '22px', fontWeight: '700', color: 'var(--text-primary)', fontFamily: "'Space Grotesk', sans-serif", letterSpacing: '-0.01em', lineHeight: 1.2 }}>
+                {getMaskedId(currentUserId)}
+              </div>
+              <div style={{ fontSize: '13px', color: 'var(--text-secondary)', marginTop: '2px' }}>
+                Account age: 847 days · Home city: Mumbai · Normal hours: 9AM–7PM
               </div>
             </div>
-          ))}
-        </div>
-      </div>
-
-      {/* TWO COLUMN GRID FOR SCORE TREND CHART AND EVENT LOG TABLE */}
-      <div style={{
-        display: 'flex',
-        gap: '20px',
-        width: '100%',
-        minHeight: '320px'
-      }}>
-        {/* LEFT COLUMN: RISK SCORE CHART */}
-        <div style={{
-          width: '50%',
-          backgroundColor: 'var(--bg-surface)',
-          border: '1px solid var(--border)',
-          padding: '20px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '16px'
-        }}>
-          <h4 className="mono" style={{ fontSize: '11px', color: 'var(--amber)', margin: 0, fontWeight: 'bold', letterSpacing: '0.05em' }}>
-            TRUST SCORE TREND
-          </h4>
-          <div style={{ flex: 1, width: '100%', height: '240px' }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={dynamicDna} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                <CartesianGrid stroke="#1E2533" strokeDasharray="3 3" vertical={false} />
-                <XAxis 
-                  dataKey="date" 
-                  tickFormatter={(val) => val.substring(8, 10)} 
-                  stroke="#5A6478" 
-                  style={{ fontSize: '10px', fontFamily: 'JetBrains Mono' }} 
-                />
-                <YAxis domain={[0, 100]} stroke="#5A6478" style={{ fontSize: '10px', fontFamily: 'JetBrains Mono' }} />
-                <ChartTooltip 
-                  contentStyle={{
-                    backgroundColor: '#0F1117',
-                    border: '1px solid var(--amber)',
-                    borderRadius: 0,
-                    fontFamily: 'JetBrains Mono',
-                    fontSize: '11px'
-                  }}
-                  itemStyle={{ color: 'var(--text-primary)' }}
-                  labelStyle={{ color: 'var(--amber)' }}
-                />
-                <ReferenceLine y={60} stroke="var(--red-threat)" strokeDasharray="3 3" label={{ value: 'RISKY', fill: 'var(--red-threat)', fontSize: 9, position: 'top' }} />
-                <ReferenceLine y={30} stroke="var(--clear)" strokeDasharray="3 3" label={{ value: 'SAFE', fill: 'var(--clear)', fontSize: 9, position: 'top' }} />
-                <Line 
-                  type="monotone" 
-                  dataKey="score" 
-                  stroke="var(--amber)" 
-                  strokeWidth={2}
-                  dot={{ r: 2, stroke: 'var(--amber)', strokeWidth: 1, fill: 'var(--bg-surface)' }}
-                  activeDot={{ r: 4 }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <span className={`badge ${trustCfg.cls}`} style={{ fontSize: '12px', padding: '5px 14px' }}>
+              {trustCfg.label}
+            </span>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button onClick={() => handleAction('CLEAR')} style={{
+                padding: '8px 16px', borderRadius: '7px', border: 'none',
+                background: 'var(--status-green)', color: '#fff', fontSize: '12px',
+                fontWeight: '600', cursor: 'pointer', transition: 'all 0.15s',
+                display: 'flex', alignItems: 'center', gap: '6px',
+              }}
+                onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(16,185,129,0.30)'; }}
+                onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = ''; }}
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg>
+                Clear User
+              </button>
+              <button onClick={() => handleAction('KYC')} style={{
+                padding: '8px 16px', borderRadius: '7px', border: 'none',
+                background: 'var(--status-amber)', color: '#fff', fontSize: '12px',
+                fontWeight: '600', cursor: 'pointer', transition: 'all 0.15s',
+              }}
+                onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-1px)'; }}
+                onMouseLeave={e => { e.currentTarget.style.transform = ''; }}
+              >Require KYC</button>
+              <button onClick={() => handleAction('FREEZE')} style={{
+                padding: '8px 16px', borderRadius: '7px', border: 'none',
+                background: 'var(--status-red)', color: '#fff', fontSize: '12px',
+                fontWeight: '600', cursor: 'pointer', transition: 'all 0.15s',
+              }}
+                onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-1px)'; }}
+                onMouseLeave={e => { e.currentTarget.style.transform = ''; }}
+              >Freeze Account</button>
+            </div>
           </div>
         </div>
 
-        {/* RIGHT COLUMN: SIGNAL HISTORY TABLE */}
+        {/* 30-Day Trust History (DNA) */}
         <div style={{
-          width: '50%',
-          backgroundColor: 'var(--bg-surface)',
-          border: '1px solid var(--border)',
-          padding: '20px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '12px'
+          background: 'var(--bg-card)', border: '1px solid var(--border)',
+          borderRadius: 'var(--radius-md)', padding: '20px 24px',
+          boxShadow: 'var(--shadow-sm)',
         }}>
-          <h4 className="mono" style={{ fontSize: '11px', color: 'var(--amber)', margin: 0, fontWeight: 'bold', letterSpacing: '0.05em' }}>
-            EVENT LOG
-          </h4>
-          <div style={{ flex: 1, overflowY: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-              <thead style={{
-                position: 'sticky',
-                top: 0,
-                backgroundColor: 'var(--bg-elevated)',
-                borderBottom: '1px solid var(--border)',
-                zIndex: 5
-              }}>
-                <tr>
-                  <th className="mono" style={{ padding: '8px', fontSize: '10px', color: 'var(--text-dim)', fontWeight: 'bold' }}>DATE</th>
-                  <th className="mono" style={{ padding: '8px', fontSize: '10px', color: 'var(--text-dim)', fontWeight: 'bold' }}>CITY</th>
-                  <th className="mono" style={{ padding: '8px', fontSize: '10px', color: 'var(--text-dim)', fontWeight: 'bold' }}>DEVICE</th>
-                  <th className="mono" style={{ padding: '8px', fontSize: '10px', color: 'var(--text-dim)', fontWeight: 'bold', textAlign: 'center' }}>SCORE</th>
-                  <th className="mono" style={{ padding: '8px', fontSize: '10px', color: 'var(--text-dim)', fontWeight: 'bold' }}>DECISION</th>
-                  <th className="mono" style={{ padding: '8px', fontSize: '10px', color: 'var(--text-dim)', fontWeight: 'bold', textAlign: 'right' }}>ACTION</th>
-                </tr>
-              </thead>
-              <tbody>
-                {logs.map((log, idx) => (
-                  <tr
-                    key={idx}
-                    style={{
-                      backgroundColor: idx % 2 === 0 ? '#080A0E' : '#0D0F14',
-                      borderBottom: '1px solid var(--border)',
-                      borderLeft: getDecisionBorder(log.decision)
-                    }}
-                  >
-                    <td className="mono" style={{ padding: '8px', fontSize: '11px', color: 'var(--text-primary)' }}>
-                      {log.date.split(' ')[0]}
-                    </td>
-                    <td className="mono" style={{ padding: '8px', fontSize: '11px', color: 'var(--text-mono)' }}>
-                      {log.city}
-                    </td>
-                    <td className="mono" style={{ padding: '8px', fontSize: '11px', color: 'var(--text-mono)' }}>
-                      {log.device}
-                    </td>
-                    <td className="mono" style={{ padding: '8px', fontSize: '11px', fontWeight: 'bold', color: getColorForScore(log.score), textAlign: 'center' }}>
-                      {log.score}
-                    </td>
-                    <td className="mono" style={{ padding: '8px', fontSize: '10px', fontWeight: 'bold', color: getColorForScore(log.score) }}>
-                      {log.decision}
-                    </td>
-                    <td className="mono" style={{ padding: '8px', fontSize: '10px', color: 'var(--text-dim)', textAlign: 'right' }}>
-                      {log.action}
-                    </td>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
+            <h3 style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-primary)', margin: 0 }}>30-Day Trust History</h3>
+            <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+              {[['≤30', 'var(--status-green)', 'Safe'], ['31–60', 'var(--status-amber)', 'Moderate'], ['61–85', 'var(--status-orange)', 'Elevated'], ['>85', 'var(--status-red)', 'Critical']].map(([range, color, label]) => (
+                <div key={range} style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                  <div style={{ width: '10px', height: '10px', borderRadius: '2px', background: color }} />
+                  <span style={{ fontSize: '11px', color: 'var(--text-tertiary)' }}>{label}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: '3px', flexWrap: 'wrap' }}>
+            {dynamicDna.map((item, idx) => (
+              <div key={idx} className="dna-cell">
+                <div style={{
+                  width: '20px', height: '36px', borderRadius: '3px',
+                  background: getScoreColor(item.score),
+                  opacity: 0.85,
+                  transition: 'opacity 0.15s, transform 0.15s',
+                }}
+                  onMouseEnter={e => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.transform = 'scaleY(1.08)'; }}
+                  onMouseLeave={e => { e.currentTarget.style.opacity = '0.85'; e.currentTarget.style.transform = 'scaleY(1)'; }}
+                />
+                <div className="dna-tip">{item.date} · Score: {item.score}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Chart + Event Log */}
+        <div style={{ display: 'flex', gap: '20px' }}>
+          {/* Chart */}
+          <div style={{
+            flex: 1, background: 'var(--bg-card)', border: '1px solid var(--border)',
+            borderRadius: 'var(--radius-md)', padding: '20px 24px',
+            boxShadow: 'var(--shadow-sm)',
+          }}>
+            <h3 style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-primary)', margin: '0 0 16px' }}>
+              Trust Score Trend — Last 30 Days
+            </h3>
+            <div style={{ height: '220px' }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={dynamicDna} margin={{ top: 8, right: 10, left: -20, bottom: 0 }}>
+                  <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" vertical={false} />
+                  <XAxis dataKey="date" tickFormatter={v => v.substring(8, 10)}
+                    stroke="var(--text-tertiary)" style={{ fontSize: '10px', fontFamily: "'Inter', sans-serif" }} />
+                  <YAxis domain={[0, 100]} stroke="var(--text-tertiary)"
+                    style={{ fontSize: '10px', fontFamily: "'Inter', sans-serif" }} />
+                  <ChartTooltip contentStyle={{
+                    background: 'var(--bg-card)', border: '1px solid var(--border)',
+                    borderRadius: '8px', fontSize: '12px', fontFamily: "'Inter', sans-serif",
+                    boxShadow: 'var(--shadow-md)',
+                  }} itemStyle={{ color: 'var(--text-primary)' }} labelStyle={{ color: 'var(--text-secondary)' }} />
+                  <ReferenceLine y={60} stroke="var(--status-red)" strokeDasharray="4 4"
+                    label={{ value: 'Risky', fill: 'var(--status-red)', fontSize: 10, position: 'right' }} />
+                  <ReferenceLine y={30} stroke="var(--status-green)" strokeDasharray="4 4"
+                    label={{ value: 'Safe', fill: 'var(--status-green)', fontSize: 10, position: 'right' }} />
+                  <Line type="monotone" dataKey="score" stroke="var(--accent)" strokeWidth={2.5}
+                    dot={{ r: 2, stroke: 'var(--accent)', fill: 'var(--bg-card)' }}
+                    activeDot={{ r: 5, stroke: 'var(--accent)', fill: 'var(--bg-card)', strokeWidth: 2 }} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* Event Log */}
+          <div style={{
+            flex: 1, background: 'var(--bg-card)', border: '1px solid var(--border)',
+            borderRadius: 'var(--radius-md)', boxShadow: 'var(--shadow-sm)',
+            display: 'flex', flexDirection: 'column', overflow: 'hidden',
+          }}>
+            <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', flexShrink: 0 }}>
+              <h3 style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-primary)', margin: 0 }}>Event Log</h3>
+            </div>
+            <div style={{ flex: 1, overflowY: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead>
+                  <tr style={{ background: 'var(--bg-card-alt)', borderBottom: '1px solid var(--border)', position: 'sticky', top: 0, zIndex: 5 }}>
+                    {['Date', 'City', 'Device', 'Score', 'Decision', 'Action'].map((h, i) => (
+                      <th key={i} style={{ padding: '9px 14px', textAlign: i >= 3 ? 'center' : 'left', fontSize: '11px', fontWeight: '600', color: 'var(--text-tertiary)', letterSpacing: '0.04em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>{h}</th>
+                    ))}
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {logs.map((log, idx) => (
+                    <tr key={idx} style={{ borderBottom: '1px solid var(--border)', transition: 'background 0.12s' }}
+                      onMouseEnter={e => { e.currentTarget.style.background = 'rgba(241,245,249,0.8)'; }}
+                      onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}>
+                      <td style={{ padding: '9px 14px', fontSize: '12px', color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>{log.date.split(' ')[0]}</td>
+                      <td style={{ padding: '9px 14px', fontSize: '12px', color: 'var(--text-secondary)' }}>{log.city}</td>
+                      <td style={{ padding: '9px 14px', fontSize: '12px', color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                          <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: log.device === 'New Device' ? 'var(--status-red)' : 'var(--status-green)', display: 'inline-block' }} />
+                          {log.device}
+                        </span>
+                      </td>
+                      <td style={{ padding: '9px 14px', textAlign: 'center' }}>
+                        <span style={{ fontSize: '12px', fontWeight: '700', color: getScoreColor(log.score), fontFamily: "'Space Grotesk', sans-serif" }}>{log.score}</span>
+                      </td>
+                      <td style={{ padding: '9px 14px', textAlign: 'center' }}>
+                        <span className={`badge ${getDecisionBadgeClass(log.decision)}`} style={{ fontSize: '10px' }}>{log.decision}</span>
+                      </td>
+                      <td style={{ padding: '9px 14px', fontSize: '11px', color: 'var(--text-tertiary)', textAlign: 'center', whiteSpace: 'nowrap' }}>{log.action}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* GEMINI THREAT ASSESSMENT */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', flexShrink: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span className="mono" style={{ fontSize: '11px', color: 'var(--amber)', fontWeight: 'bold', letterSpacing: '0.05em' }}>
-            AI THREAT ASSESSMENT
-          </span>
-          <span className="badge" style={{ fontSize: '8px', padding: '2px 6px', backgroundColor: 'rgba(255,140,0,0.15)', color: 'var(--amber)', border: '1px solid var(--border-amber)' }}>
-            GEMINI 2.5 FLASH
-          </span>
-        </div>
-
+        {/* AI Threat Assessment */}
         <div style={{
-          backgroundColor: '#050709',
-          border: '1px solid rgba(255,140,0,0.3)',
-          padding: '16px',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '14px'
+          background: 'var(--bg-card)', border: '1px solid var(--border)',
+          borderRadius: 'var(--radius-md)', padding: '20px 24px',
+          boxShadow: 'var(--shadow-sm)',
         }}>
-          <pre className="mono" style={{
-            margin: 0,
-            fontSize: '12px',
-            color: 'var(--amber)',
-            lineHeight: '1.8',
-            whiteSpace: 'pre-wrap',
-            fontFamily: 'JetBrains Mono, monospace'
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px' }}>
+            <div style={{ width: '34px', height: '34px', borderRadius: '8px', background: 'var(--accent-dim)', border: '1px solid var(--accent-border)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent)' }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+            </div>
+            <div>
+              <div style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-primary)' }}>AI Threat Assessment</div>
+              <div style={{ fontSize: '11px', color: 'var(--text-tertiary)' }}>Powered by {sourceModel} · Confidence: {confidence}</div>
+            </div>
+            <span style={{ marginLeft: 'auto', padding: '3px 9px', borderRadius: '99px', background: 'var(--accent-dim)', border: '1px solid var(--accent-border)', fontSize: '10px', fontWeight: '600', color: 'var(--accent)' }}>
+              Gemini 2.5 Flash
+            </span>
+          </div>
+          <div style={{
+            background: '#0F172A', border: '1px solid rgba(255,106,19,0.15)',
+            borderRadius: '8px', padding: '16px 18px',
           }}>
-            {analysisText}
-            <span className="blinking-cursor">█</span>
-          </pre>
-
-          <div className="mono" style={{
-            fontSize: '10px',
-            color: 'var(--text-dim)',
-            borderTop: '1px solid var(--border)',
-            paddingTop: '8px',
-            marginTop: '6px'
-          }}>
-            — Generated by {sourceModel} | Confidence: {confidence} | Model: contextguard-identity-v1
+            <pre style={{
+              margin: 0, fontSize: '12px', color: '#94A3B8',
+              lineHeight: '1.9', whiteSpace: 'pre-wrap',
+              fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+            }}>
+              <span style={{ color: 'var(--accent)' }}>{analysisText}</span>
+              <span className="blink">█</span>
+            </pre>
           </div>
         </div>
-      </div>
-
-      {/* ACTION BUTTONS ROW */}
-      <div style={{
-        display: 'flex',
-        gap: '16px',
-        flexShrink: 0,
-        borderTop: '1px solid var(--border)',
-        paddingTop: '20px',
-        marginBottom: '20px'
-      }}>
-        <button
-          onClick={() => handleAction('CLEAR')}
-          className="mono"
-          style={{
-            minWidth: '160px',
-            height: '42px',
-            backgroundColor: 'transparent',
-            border: '1px solid var(--clear)',
-            color: 'var(--clear)',
-            fontWeight: 'bold',
-            fontSize: '11px',
-            cursor: 'pointer',
-            letterSpacing: '0.05em',
-            borderRadius: 0,
-            transition: 'background-color 0.2s'
-          }}
-          onMouseOver={(e) => { e.currentTarget.style.backgroundColor = 'var(--clear-dim)'; }}
-          onMouseOut={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
-        >
-          CLEAR USER
-        </button>
-
-        <button
-          onClick={() => handleAction('KYC')}
-          className="mono"
-          style={{
-            minWidth: '160px',
-            height: '42px',
-            backgroundColor: 'transparent',
-            border: '1px solid var(--amber)',
-            color: 'var(--amber)',
-            fontWeight: 'bold',
-            fontSize: '11px',
-            cursor: 'pointer',
-            letterSpacing: '0.05em',
-            borderRadius: 0,
-            transition: 'background-color 0.2s'
-          }}
-          onMouseOver={(e) => { e.currentTarget.style.backgroundColor = 'var(--amber-dim)'; }}
-          onMouseOut={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
-        >
-          REQUIRE KYC
-        </button>
-
-        <button
-          onClick={() => handleAction('FREEZE')}
-          className="mono"
-          style={{
-            minWidth: '160px',
-            height: '42px',
-            backgroundColor: 'var(--red-threat)',
-            border: '1px solid var(--red-threat)',
-            color: '#FFFFFF',
-            fontWeight: 'bold',
-            fontSize: '11px',
-            cursor: 'pointer',
-            letterSpacing: '0.05em',
-            borderRadius: 0,
-            transition: 'background-color 0.2s'
-          }}
-          onMouseOver={(e) => { e.currentTarget.style.backgroundColor = '#E02424'; }}
-          onMouseOut={(e) => { e.currentTarget.style.backgroundColor = 'var(--red-threat)'; }}
-        >
-          FREEZE ACCOUNT
-        </button>
-      </div>
-
+      </main>
     </div>
   );
 }

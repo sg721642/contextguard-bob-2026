@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 
 // ─── Hardcoded employee data ────────────────────────────────────────────────
 const EMPLOYEES = [
@@ -141,29 +142,57 @@ RECOMMENDED ACTION: NO_ACTION — Trusted profile`
 
 // ─── Colour helpers ─────────────────────────────────────────────────────────
 const getRiskColor = (level) => {
-  if (level === 'CRITICAL') return 'var(--red-threat)';
-  if (level === 'HIGH')     return 'var(--orange-mid)';
-  if (level === 'MEDIUM')   return 'var(--amber)';
-  return 'var(--clear)';
+  if (level === 'CRITICAL') return 'var(--status-red)';
+  if (level === 'HIGH')     return 'var(--status-orange)';
+  if (level === 'MEDIUM')   return 'var(--status-amber)';
+  return 'var(--status-green)';
 };
 
 const getRiskBg = (level) => {
-  if (level === 'CRITICAL') return 'var(--red-dim)';
-  if (level === 'HIGH')     return 'rgba(255,107,53,0.12)';
-  if (level === 'MEDIUM')   return 'var(--amber-dim)';
-  return 'var(--clear-dim)';
+  if (level === 'CRITICAL') return 'var(--status-red-bg)';
+  if (level === 'HIGH')     return 'var(--status-orange-bg)';
+  if (level === 'MEDIUM')   return 'var(--status-amber-bg)';
+  return 'var(--status-green-bg)';
 };
 
 const getRiskBorder = (level) => {
-  if (level === 'CRITICAL') return 'rgba(255,45,45,0.4)';
-  if (level === 'HIGH')     return 'rgba(255,107,53,0.4)';
-  if (level === 'MEDIUM')   return 'var(--border-amber)';
-  return 'rgba(0,255,135,0.4)';
+  if (level === 'CRITICAL') return 'var(--status-red-border)';
+  if (level === 'HIGH')     return 'var(--status-orange-border)';
+  if (level === 'MEDIUM')   return 'var(--status-amber-border)';
+  return 'var(--status-green-border)';
 };
 
 const getDeptColor = (dept) => {
-  const map = { Loans: 'var(--amber)', IT: 'var(--orange-mid)', Operations: 'var(--text-mono)', Retail: '#A0D0FF', Compliance: 'var(--clear)' };
-  return map[dept] || 'var(--text-dim)';
+  const map = { 
+    Loans: 'var(--status-amber)', 
+    IT: 'var(--status-blue)', 
+    Operations: 'var(--text-secondary)', 
+    Retail: 'var(--accent)', 
+    Compliance: 'var(--status-green)' 
+  };
+  return map[dept] || 'var(--text-tertiary)';
+};
+
+const getDeptBg = (dept) => {
+  const map = {
+    Loans: 'var(--status-amber-bg)',
+    IT: 'var(--status-blue-bg)',
+    Operations: 'var(--bg-card-alt)',
+    Retail: 'var(--accent-dim)',
+    Compliance: 'var(--status-green-bg)'
+  };
+  return map[dept] || 'var(--bg-card-alt)';
+};
+
+const getDeptBorder = (dept) => {
+  const map = {
+    Loans: 'var(--status-amber-border)',
+    IT: 'var(--status-blue-border)',
+    Operations: 'var(--border)',
+    Retail: 'var(--accent-border)',
+    Compliance: 'var(--status-green-border)'
+  };
+  return map[dept] || 'var(--border)';
 };
 
 const isOutsideHours   = (emp) => emp.loginHour < emp.normalHours.start || emp.loginHour >= emp.normalHours.end;
@@ -316,7 +345,7 @@ export default function InsiderMonitor() {
 
   return (
     <>
-      {/* Keyframes */}
+      {/* Keyframes and styles */}
       <style>{`
         @keyframes slide-in-right {
           from { transform: translateX(100%); opacity: 0; }
@@ -327,17 +356,24 @@ export default function InsiderMonitor() {
           50%       { opacity: 0; }
         }
         .emp-card {
-          transition: border-color 0.15s, background-color 0.15s;
+          transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
           cursor: pointer;
         }
-        .emp-card:hover { border-color: var(--amber) !important; background-color: #12151E !important; }
-        .action-btn { transition: background-color 0.15s, color 0.15s; cursor: pointer; }
+        .emp-card:hover {
+          transform: translateY(-2px);
+          box-shadow: var(--shadow-hover);
+          border-color: var(--accent-light) !important;
+        }
+        .blink-im {
+          animation: blink-cursor-im 0.9s step-start infinite;
+          color: var(--accent);
+        }
       `}</style>
 
       <div style={{
         display: 'flex',
         height: '100vh',
-        backgroundColor: 'var(--bg-void)',
+        backgroundColor: 'var(--bg-page)',
         overflow: 'hidden',
         position: 'relative'
       }}>
@@ -354,23 +390,18 @@ export default function InsiderMonitor() {
           {/* CRITICAL ALERT BANNER */}
           {criticalEmployees.length > 0 && (
             <div style={{
-              backgroundColor: 'rgba(255,45,45,0.08)',
-              borderBottom: '1px solid rgba(255,45,45,0.4)',
+              backgroundColor: 'var(--status-red-bg)',
+              borderBottom: '1px solid var(--status-red-border)',
               padding: '10px 24px',
               display: 'flex',
               alignItems: 'center',
               gap: '10px',
-              flexShrink: 0
+              flexShrink: 0,
+              zIndex: 10
             }}>
-              <span style={{
-                width: '8px', height: '8px',
-                backgroundColor: 'var(--red-threat)',
-                borderRadius: '50%',
-                display: 'inline-block',
-                animation: 'pulse-amber 1.1s infinite ease-in-out'
-              }} />
-              <span className="mono" style={{ fontSize: '12px', color: 'var(--amber)', fontWeight: 'bold' }}>
-                ⚠ CRITICAL: {criticalEmployees.length} employee{criticalEmployees.length > 1 ? 's' : ''} flagged for immediate review
+              <span className="pulse-red-dot" />
+              <span className="font-mono" style={{ fontSize: '12px', color: 'var(--status-red)', fontWeight: 'bold' }}>
+                WARNING: {criticalEmployees.length} employee{criticalEmployees.length > 1 ? 's' : ''} flagged with elevated risk scores
                 &nbsp;—&nbsp;
                 {criticalEmployees.map(e => e.id).join(', ')}
               </span>
@@ -378,59 +409,80 @@ export default function InsiderMonitor() {
           )}
 
           {/* PAGE HEADER */}
+          <header className="glass" style={{
+            height: 'var(--header-height)', position: 'sticky', top: 0, zIndex: 100,
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            padding: '0 28px', flexShrink: 0,
+            boxShadow: '0 1px 0 rgba(0,0,0,0.06)',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+              <Link to="/" style={{
+                display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-secondary)',
+                textDecoration: 'none', fontSize: '13px', fontWeight: '500',
+                padding: '6px 10px', borderRadius: '7px', border: '1px solid var(--border)',
+                background: 'var(--bg-card-alt)', transition: 'all 0.15s',
+              }}
+                onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-primary)'; }}
+                onMouseLeave={e => { e.currentTarget.style.color = 'var(--text-secondary)'; }}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                  <path d="M19 12H5M12 5l-7 7 7 7"/>
+                </svg>
+                Dashboard
+              </Link>
+              <span style={{ color: 'var(--border-strong)' }}>/</span>
+              <span style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-primary)', fontFamily: "'Space Grotesk', sans-serif" }}>
+                Insider Threat Monitor
+              </span>
+            </div>
+
+            <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: '6px',
+                padding: '5px 12px', borderRadius: '99px',
+                background: isDemoMode ? 'var(--status-amber-bg)' : 'var(--status-green-bg)',
+                border: `1px solid ${isDemoMode ? 'var(--status-amber-border)' : 'var(--status-green-border)'}`,
+              }}>
+                <span className={isDemoMode ? '' : 'pulse-green-dot'} style={{
+                  width: '7px', height: '7px', borderRadius: '50%',
+                  background: isDemoMode ? 'var(--status-amber)' : 'var(--status-green)',
+                  display: 'inline-block',
+                }} />
+                <span style={{
+                  fontSize: '11px', fontWeight: '600',
+                  color: isDemoMode ? 'var(--status-amber)' : 'var(--status-green)',
+                }}>
+                  {isDemoMode ? 'Demo Mode' : 'API Connected'}
+                </span>
+              </div>
+              <img src="/bob-logo.png" alt="Bank of Baroda" style={{ height: '28px', objectFit: 'contain' }}
+                onError={e => { e.target.style.display = 'none'; }} />
+            </div>
+          </header>
+
+          {/* SUB-HEADER METRICS */}
           <div style={{
-            padding: '20px 24px 16px',
-            borderBottom: '1px solid var(--border)',
+            padding: '24px 28px 0',
             display: 'flex',
-            alignItems: 'flex-start',
             justifyContent: 'space-between',
+            alignItems: 'center',
             flexShrink: 0
           }}>
             <div>
-              <h1 className="display" style={{
-                fontSize: '22px', fontWeight: '700',
-                color: 'var(--amber)', margin: '0 0 6px 0'
-              }}>
-                INSIDER THREAT MONITOR
+              <h1 style={{ fontSize: '20px', fontWeight: '700', color: 'var(--text-primary)', fontFamily: "'Space Grotesk', sans-serif", margin: 0, letterSpacing: '-0.01em' }}>
+                Insider Threat Monitor
               </h1>
-              <p style={{
-                fontFamily: 'Inter, sans-serif',
-                fontSize: '12px', color: 'var(--text-dim)', margin: 0
-              }}>
-                Bank employee behavioral analysis — real-time anomaly detection
+              <p style={{ fontSize: '13px', color: 'var(--text-secondary)', margin: '2px 0 0' }}>
+                Real-time tracking of internal user access patterns and data transfer anomalies.
               </p>
             </div>
 
-            <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-              <div className="mono" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', marginRight: '10px' }}>
-                <span style={{
-                  width: '8px',
-                  height: '8px',
-                  backgroundColor: isDemoMode ? 'var(--amber)' : 'var(--clear)',
-                  borderRadius: '50%',
-                  display: 'inline-block'
-                }}></span>
-                <span style={{ color: isDemoMode ? 'var(--amber)' : 'var(--clear)', letterSpacing: '0.1em', fontWeight: 'bold' }}>
-                  {isDemoMode ? 'DEMO MODE' : 'API CONNECTED'}
-                </span>
-              </div>
-              <span className="mono" style={{
-                fontSize: '11px', fontWeight: 'bold',
-                color: 'var(--amber)',
-                border: '1px solid var(--border-amber)',
-                padding: '5px 12px',
-                backgroundColor: 'var(--amber-dim)'
-              }}>
-                {employees.length} EMPLOYEES MONITORED
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <span className="badge badge-clear" style={{ padding: '6px 12px', fontSize: '11px' }}>
+                {employees.length} Monitored
               </span>
-              <span className="mono" style={{
-                fontSize: '11px', fontWeight: 'bold',
-                color: 'var(--red-threat)',
-                border: '1px solid rgba(255,45,45,0.4)',
-                padding: '5px 12px',
-                backgroundColor: 'var(--red-dim)'
-              }}>
-                {criticalEmployees.length} CRITICAL
+              <span className="badge badge-block" style={{ padding: '6px 12px', fontSize: '11px' }}>
+                {criticalEmployees.length} Critical Flagged
               </span>
             </div>
           </div>
@@ -439,12 +491,12 @@ export default function InsiderMonitor() {
           <div style={{
             flex: 1,
             overflowY: 'auto',
-            padding: '20px 24px'
+            padding: '24px 28px'
           }}>
             <div style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(2, 1fr)',
-              gap: '14px'
+              gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))',
+              gap: '16px'
             }}>
               {employees.map((emp) => {
                 const isSelected   = selected?.id === emp.id;
@@ -456,112 +508,112 @@ export default function InsiderMonitor() {
                 return (
                   <div
                     key={emp.id}
-                    className="emp-card"
+                    className="emp-card card"
                     onClick={() => handleSelectEmployee(emp)}
                     style={{
-                      backgroundColor: isSelected ? '#12151E' : '#0F1117',
-                      border: `1px solid ${isSelected ? 'var(--amber)' : 'var(--border)'}`,
-                      borderRadius: 0,
-                      padding: '16px',
+                      backgroundColor: isSelected ? 'var(--bg-card-alt)' : 'var(--bg-card)',
+                      border: `1px solid ${isSelected ? 'var(--accent)' : 'var(--border)'}`,
+                      borderRadius: 'var(--radius-md)',
+                      padding: '20px',
                       display: 'flex',
                       flexDirection: 'column',
-                      gap: '10px',
-                      position: 'relative'
+                      gap: '14px',
+                      position: 'relative',
                     }}
                   >
-                    {/* Status ribbon */}
+                    {/* Status badge in top-right */}
                     {status !== 'ACTIVE' && (
                       <div style={{
-                        position: 'absolute', top: 0, right: 0,
-                        padding: '3px 10px',
+                        position: 'absolute', top: '16px', right: '16px',
+                        padding: '4px 10px',
+                        borderRadius: '99px',
                         backgroundColor:
-                          status === 'SUSPENDED' ? 'var(--red-dim)' :
-                          status === 'FLAGGED'   ? 'var(--amber-dim)' : 'var(--clear-dim)',
-                        borderLeft: `2px solid ${
-                          status === 'SUSPENDED' ? 'var(--red-threat)' :
-                          status === 'FLAGGED'   ? 'var(--amber)' : 'var(--clear)'
+                          status === 'SUSPENDED' ? 'var(--status-red-bg)' :
+                          status === 'FLAGGED'   ? 'var(--status-amber-bg)' : 'var(--status-green-bg)',
+                        border: `1px solid ${
+                          status === 'SUSPENDED' ? 'var(--status-red-border)' :
+                          status === 'FLAGGED'   ? 'var(--status-amber-border)' : 'var(--status-green-border)'
                         }`
                       }}>
-                        <span className="mono" style={{
-                          fontSize: '9px', fontWeight: 'bold',
+                        <span className="font-mono" style={{
+                          fontSize: '10px', fontWeight: '700',
                           color:
-                            status === 'SUSPENDED' ? 'var(--red-threat)' :
-                            status === 'FLAGGED'   ? 'var(--amber)' : 'var(--clear)'
+                            status === 'SUSPENDED' ? 'var(--status-red)' :
+                            status === 'FLAGGED'   ? 'var(--status-amber)' : 'var(--status-green)'
                         }}>
                           {status}
                         </span>
                       </div>
                     )}
 
-                    {/* Top row: EMP ID + dept badge */}
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <span className="mono" style={{
-                        fontSize: '12px', fontWeight: 'bold', color: 'var(--amber)'
+                    {/* Top line: Avatar + Name + Dept */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <div style={{
+                        width: '40px', height: '40px', borderRadius: '50%',
+                        background: 'linear-gradient(135deg, #FF6A13 0%, #FF8A40 100%)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontSize: '13px', fontWeight: '700', color: '#fff',
+                        boxShadow: 'var(--shadow-sm)',
                       }}>
-                        {emp.id}
-                      </span>
-                      <span className="mono" style={{
-                        fontSize: '10px', color: getDeptColor(emp.department),
-                        border: `1px solid ${getDeptColor(emp.department)}33`,
-                        padding: '2px 8px'
-                      }}>
-                        {emp.department.toUpperCase()}
-                      </span>
+                        {emp.name.split(' ').map(n => n[0]).join('')}
+                      </div>
+                      <div>
+                        <div style={{ fontSize: '15px', fontWeight: '700', color: 'var(--text-primary)', fontFamily: "'Space Grotesk', sans-serif" }}>
+                          {emp.name}
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '2px' }}>
+                          <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontFamily: "'Inter', sans-serif" }}>
+                            {emp.id}
+                          </span>
+                          <span style={{
+                            fontSize: '9px', fontWeight: '700', textTransform: 'uppercase',
+                            color: getDeptColor(emp.department),
+                            border: `1px solid ${getDeptBorder(emp.department)}`,
+                            backgroundColor: getDeptBg(emp.department),
+                            padding: '2px 8px', borderRadius: '4px',
+                          }}>
+                            {emp.department}
+                          </span>
+                        </div>
+                      </div>
                     </div>
 
-                    {/* Name + Level Badge */}
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <span className="display" style={{ fontSize: '14px', color: 'var(--text-primary)', fontWeight: '600' }}>
-                        {emp.name}
-                      </span>
-                      <span className="badge" style={{
-                        fontSize: '9px',
-                        backgroundColor: getRiskBg(emp.level),
-                        color: getRiskColor(emp.level),
-                        border: `1px solid ${getRiskBorder(emp.level)}`
-                      }}>
-                        {emp.level}
-                      </span>
-                    </div>
-
-                    {/* Risk bar */}
-                    <div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                        <span className="mono" style={{ fontSize: '10px', color: 'var(--text-dim)' }}>RISK SCORE</span>
-                        <span className="mono" style={{
-                          fontSize: '11px', fontWeight: 'bold',
-                          color: getRiskColor(emp.level)
-                        }}>
-                          {emp.risk}/100
+                    {/* Risk progress section */}
+                    <div style={{ background: 'var(--bg-card-alt)', padding: '12px 14px', borderRadius: '8px', border: '1px solid var(--border)' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', alignItems: 'center' }}>
+                        <span style={{ fontSize: '11px', fontWeight: '600', color: 'var(--text-secondary)' }}>RISK LEVEL</span>
+                        <span style={{ fontSize: '12px', fontWeight: '700', color: getRiskColor(emp.level), fontFamily: "'Space Grotesk', sans-serif" }}>
+                          {emp.risk}/100 · {emp.level}
                         </span>
                       </div>
-                      <div style={{
-                        width: '100%', height: '6px',
-                        backgroundColor: 'var(--bg-void)',
-                        border: '1px solid var(--border)'
-                      }}>
+                      <div style={{ height: '6px', background: 'var(--border)', borderRadius: '99px', overflow: 'hidden' }}>
                         <div style={{
                           width: `${emp.risk}%`, height: '100%',
-                          backgroundColor: getRiskColor(emp.level),
-                          transition: 'width 0.8s ease'
+                          background: `linear-gradient(90deg, ${getRiskColor(emp.level)}dd, ${getRiskColor(emp.level)})`,
+                          borderRadius: '99px', transition: 'width 0.8s ease'
                         }} />
                       </div>
                     </div>
 
-                    {/* Stats row */}
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                      <div className="mono" style={{ fontSize: '11px', color: badRecords ? 'var(--red-threat)' : 'var(--text-dim)' }}>
-                        Records today:&nbsp;
-                        <span style={{ fontWeight: 'bold' }}>{emp.records}</span>
-                        <span style={{ color: 'var(--text-dim)' }}> (normal: {emp.normalRecords})</span>
+                    {/* Detailed metrics logs */}
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px', marginTop: '4px' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                        <span style={{ fontSize: '10px', color: 'var(--text-tertiary)' }}>RECORDS today</span>
+                        <span style={{ fontSize: '13px', fontWeight: '700', color: badRecords ? 'var(--status-red)' : 'var(--text-primary)', fontFamily: "'Space Grotesk', sans-serif" }}>
+                          {emp.records} <span style={{ fontSize: '10px', color: 'var(--text-tertiary)', fontWeight: '400' }}>/ {emp.normalRecords}</span>
+                        </span>
                       </div>
-                      <div className="mono" style={{ fontSize: '11px', color: badOutsideHrs ? 'var(--red-threat)' : 'var(--text-dim)' }}>
-                        Last login:&nbsp;
-                        <span style={{ fontWeight: 'bold' }}>{emp.loginTime}</span>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                        <span style={{ fontSize: '10px', color: 'var(--text-tertiary)' }}>LOGIN HOUR</span>
+                        <span style={{ fontSize: '13px', fontWeight: '700', color: badOutsideHrs ? 'var(--status-red)' : 'var(--text-primary)', fontFamily: "'Space Grotesk', sans-serif" }}>
+                          {emp.loginTime}
+                        </span>
                       </div>
-                      <div className="mono" style={{ fontSize: '11px', color: badExport ? 'var(--red-threat)' : 'var(--text-dim)' }}>
-                        Data exported:&nbsp;
-                        <span style={{ fontWeight: 'bold' }}>{emp.dataExported} MB</span>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                        <span style={{ fontSize: '10px', color: 'var(--text-tertiary)' }}>DATA EXPORTED</span>
+                        <span style={{ fontSize: '13px', fontWeight: '700', color: badExport ? 'var(--status-red)' : 'var(--text-primary)', fontFamily: "'Space Grotesk', sans-serif" }}>
+                          {emp.dataExported} <span style={{ fontSize: '10px', color: 'var(--text-tertiary)', fontWeight: '400' }}>MB</span>
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -574,193 +626,183 @@ export default function InsiderMonitor() {
         {/* ── DETAIL PANEL (slide in from right) ───────────────── */}
         {selected && (
           <div style={{
-            width: '380px',
+            width: '420px',
             height: '100%',
-            backgroundColor: '#0F1117',
-            borderLeft: '1px solid var(--amber)',
+            backgroundColor: 'var(--bg-card)',
+            borderLeft: '1px solid var(--border)',
             display: 'flex',
             flexDirection: 'column',
             flexShrink: 0,
-            animation: 'slide-in-right 0.22s ease-out',
-            overflowY: 'auto'
+            animation: 'slide-in-right 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+            overflowY: 'auto',
+            boxShadow: 'var(--shadow-lg)',
+            zIndex: 200
           }}>
             {/* Panel header */}
             <div style={{
-              padding: '14px 16px',
+              padding: '18px 22px',
               borderBottom: '1px solid var(--border)',
-              backgroundColor: 'rgba(255,140,0,0.06)',
+              background: 'var(--bg-card-alt)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
               flexShrink: 0
             }}>
               <div>
-                <span className="mono" style={{ fontSize: '12px', color: 'var(--amber)', fontWeight: 'bold' }}>
+                <span className="font-mono" style={{ fontSize: '13px', color: 'var(--accent)', fontWeight: '700' }}>
                   {selected.id}
                 </span>
-                <span className="mono" style={{ fontSize: '11px', color: 'var(--text-dim)', marginLeft: '10px' }}>
-                  {selected.department}
+                <span style={{ fontSize: '12px', color: 'var(--text-secondary)', marginLeft: '10px', fontWeight: '500' }}>
+                  {selected.department} Department
                 </span>
               </div>
               <button
                 onClick={() => setSelected(null)}
                 style={{
                   background: 'transparent', border: '1px solid var(--border)',
-                  color: 'var(--text-dim)', width: '28px', height: '28px',
-                  cursor: 'pointer', fontSize: '14px', borderRadius: 0
+                  color: 'var(--text-tertiary)', width: '30px', height: '30px',
+                  cursor: 'pointer', fontSize: '14px', borderRadius: '6px',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  transition: 'all 0.15s'
                 }}
+                onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-page)'; e.currentTarget.style.color = 'var(--text-primary)'; }}
+                onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-tertiary)'; }}
               >
                 ✕
               </button>
             </div>
 
             {/* Panel body */}
-            <div style={{ flex: 1, padding: '16px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div style={{ flex: 1, padding: '22px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
               {/* Name & Risk */}
-              <div>
-                <div className="display" style={{
-                  fontSize: '18px', fontWeight: '700',
-                  color: 'var(--text-primary)', marginBottom: '6px'
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                <div style={{
+                  width: '48px', height: '48px', borderRadius: '50%',
+                  background: 'linear-gradient(135deg, #FF6A13 0%, #FF8A40 100%)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: '16px', fontWeight: '700', color: '#fff',
                 }}>
-                  {selected.name}
+                  {selected.name.split(' ').map(n => n[0]).join('')}
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <span className="mono" style={{
-                    fontSize: '24px', fontWeight: 'bold',
-                    color: getRiskColor(selected.level)
+                <div>
+                  <div className="font-display" style={{
+                    fontSize: '18px', fontWeight: '700',
+                    color: 'var(--text-primary)', lineHeight: 1.2
                   }}>
-                    {selected.risk}
-                  </span>
-                  <span className="mono" style={{ fontSize: '12px', color: 'var(--text-dim)' }}>/ 100</span>
-                  <span className="badge" style={{
-                    fontSize: '10px',
-                    backgroundColor: getRiskBg(selected.level),
-                    color: getRiskColor(selected.level),
-                    border: `1px solid ${getRiskBorder(selected.level)}`
-                  }}>
-                    {selected.level}
-                  </span>
+                    {selected.name}
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
+                    <span style={{ fontSize: '16px', fontWeight: '700', color: getRiskColor(selected.level), fontFamily: "'Space Grotesk', sans-serif" }}>
+                      {selected.risk}
+                    </span>
+                    <span style={{ fontSize: '11px', color: 'var(--text-tertiary)' }}>/ 100</span>
+                    <span className="badge" style={{
+                      fontSize: '10px',
+                      backgroundColor: getRiskBg(selected.level),
+                      color: getRiskColor(selected.level),
+                      border: `1px solid ${getRiskBorder(selected.level)}`
+                    }}>
+                      {selected.level}
+                    </span>
+                  </div>
                 </div>
               </div>
 
               {/* Full stats */}
               <div style={{
-                backgroundColor: 'var(--bg-void)',
+                backgroundColor: 'var(--bg-card-alt)',
                 border: '1px solid var(--border)',
-                padding: '12px',
+                borderRadius: 'var(--radius-md)',
+                padding: '16px',
                 display: 'flex',
                 flexDirection: 'column',
-                gap: '8px'
+                gap: '12px'
               }}>
                 {[
-                  { label: 'Records Accessed', value: `${selected.records}`, normal: `baseline: ${selected.normalRecords}`, bad: isHighRecords(selected) },
-                  { label: 'Login Time', value: selected.loginTime, normal: `approved: ${selected.normalHours.start}AM–${selected.normalHours.end >= 12 ? selected.normalHours.end - 12 + 'PM' : selected.normalHours.end + 'AM'}`, bad: isOutsideHours(selected) },
-                  { label: 'Data Exported', value: `${selected.dataExported} MB`, normal: 'threshold: 10 MB', bad: isHighExport(selected) },
+                  { label: 'Records Accessed', value: `${selected.records}`, normal: `baseline limit: ${selected.normalRecords}`, bad: isHighRecords(selected) },
+                  { label: 'Login Hour', value: selected.loginTime, normal: `approved shifts: ${selected.normalHours.start}AM–${selected.normalHours.end >= 12 ? selected.normalHours.end - 12 + 'PM' : selected.normalHours.end + 'AM'}`, bad: isOutsideHours(selected) },
+                  { label: 'Data Exported', value: `${selected.dataExported} MB`, normal: 'allowance: 10 MB', bad: isHighExport(selected) },
                 ].map(({ label, value, normal, bad }) => (
                   <div key={label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-                    <span className="mono" style={{ fontSize: '10px', color: 'var(--text-dim)' }}>{label}</span>
+                    <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: '500' }}>{label}</span>
                     <div style={{ textAlign: 'right' }}>
-                      <span className="mono" style={{ fontSize: '12px', fontWeight: 'bold', color: bad ? 'var(--red-threat)' : 'var(--text-primary)' }}>
+                      <span style={{ fontSize: '13px', fontWeight: '700', color: bad ? 'var(--status-red)' : 'var(--text-primary)', fontFamily: "'Space Grotesk', sans-serif" }}>
                         {value}
                       </span>
                       <br />
-                      <span className="mono" style={{ fontSize: '9px', color: 'var(--text-dim)' }}>{normal}</span>
+                      <span style={{ fontSize: '10px', color: 'var(--text-tertiary)' }}>{normal}</span>
                     </div>
                   </div>
                 ))}
               </div>
 
               {/* Gemini Analysis terminal */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span className="mono" style={{ fontSize: '10px', color: 'var(--amber)', fontWeight: 'bold', letterSpacing: '0.06em' }}>
-                    AI THREAT ASSESSMENT
-                  </span>
-                  <span className="badge" style={{
-                    fontSize: '8px', padding: '2px 6px',
-                    backgroundColor: 'rgba(255,140,0,0.15)',
-                    color: 'var(--amber)',
-                    border: '1px solid var(--border-amber)'
-                  }}>
-                    GEMINI 2.5 FLASH
-                  </span>
+                  <div style={{ width: '28px', height: '28px', borderRadius: '6px', background: 'var(--accent-dim)', border: '1px solid var(--accent-border)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent)' }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                    </svg>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '12px', fontWeight: '600', color: 'var(--text-primary)' }}>AI Threat Assessment</div>
+                    <div style={{ fontSize: '10px', color: 'var(--text-tertiary)' }}>Powered by Gemini 2.5 Flash</div>
+                  </div>
                 </div>
+
                 <div style={{
-                  backgroundColor: '#050709',
-                  border: '1px solid rgba(255,140,0,0.3)',
-                  padding: '12px'
+                  backgroundColor: '#0F172A',
+                  border: '1px solid rgba(255,106,19,0.15)',
+                  borderRadius: '8px',
+                  padding: '16px'
                 }}>
-                  <pre className="mono" style={{
-                    margin: 0, fontSize: '11px',
-                    color: 'var(--amber)', lineHeight: '1.8',
+                  <pre style={{
+                    margin: 0, fontSize: '12px',
+                    color: '#94A3B8', lineHeight: '1.9',
                     whiteSpace: 'pre-wrap',
-                    fontFamily: 'JetBrains Mono, monospace'
+                    fontFamily: "'JetBrains Mono', 'Fira Code', monospace"
                   }}>
-                    {selected.analysis}
-                    <span style={{ animation: 'blink-cursor-im 0.8s step-start infinite', color: 'var(--amber)' }}>█</span>
+                    <span style={{ color: 'var(--accent)' }}>{selected.analysis}</span>
+                    <span className="blink-im">█</span>
                   </pre>
-                  <div className="mono" style={{
-                    fontSize: '9px', color: 'var(--text-dim)',
-                    borderTop: '1px solid var(--border)',
-                    paddingTop: '6px', marginTop: '8px'
+                  <div style={{
+                    fontSize: '10px', color: 'var(--text-on-dark-dim)',
+                    borderTop: '1px solid rgba(255,255,255,0.08)',
+                    paddingTop: '8px', marginTop: '12px'
                   }}>
-                    — Generated by {selected.source === 'gemini-2.0-flash' ? 'Gemini 2.5 Flash' : 'Rule-Based Engine'} | Confidence: {selected.confidence || '0.91'} | Model: contextguard-insider-v1
+                    — Source: {selected.source === 'gemini-2.0-flash' ? 'Gemini 2.5 Flash' : 'Rule-Based Engine'} · Confidence: {selected.confidence || '0.91'} · Model: contextguard-insider-v1
                   </div>
                 </div>
               </div>
 
               {/* Action Buttons */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: 'auto' }}>
-                <div className="mono" style={{ fontSize: '10px', color: 'var(--amber)', fontWeight: 'bold', letterSpacing: '0.06em', marginBottom: '2px' }}>
-                  MANAGER ACTIONS
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: 'auto', paddingTop: '16px' }}>
+                <div style={{ fontSize: '11px', color: 'var(--text-tertiary)', fontWeight: '700', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: '4px' }}>
+                  Analyst Response Actions
                 </div>
 
                 <button
-                  className="action-btn mono"
+                  className="btn btn-ghost"
                   onClick={() => handleAction(selected.id, 'CLEARED')}
-                  style={{
-                    width: '100%', height: '38px', borderRadius: 0,
-                    backgroundColor: 'transparent',
-                    border: '1px solid var(--clear)',
-                    color: 'var(--clear)',
-                    fontSize: '11px', fontWeight: 'bold', letterSpacing: '0.04em'
-                  }}
-                  onMouseOver={e => e.currentTarget.style.backgroundColor = 'var(--clear-dim)'}
-                  onMouseOut={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                  style={{ justifyContent: 'center', height: '38px', fontSize: '12px', fontWeight: '600' }}
                 >
-                  CLEAR — NO THREAT DETECTED
+                  Clear — False Positive
                 </button>
 
                 <button
-                  className="action-btn mono"
+                  className="btn btn-primary"
                   onClick={() => handleAction(selected.id, 'FLAGGED')}
-                  style={{
-                    width: '100%', height: '38px', borderRadius: 0,
-                    backgroundColor: 'transparent',
-                    border: '1px solid var(--amber)',
-                    color: 'var(--amber)',
-                    fontSize: '11px', fontWeight: 'bold', letterSpacing: '0.04em'
-                  }}
-                  onMouseOver={e => e.currentTarget.style.backgroundColor = 'var(--amber-dim)'}
-                  onMouseOut={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                  style={{ justifyContent: 'center', height: '38px', fontSize: '12px', fontWeight: '600' }}
                 >
-                  FLAG FOR REVIEW
+                  Flag for Investigation
                 </button>
 
                 <button
-                  className="action-btn mono"
+                  className="btn btn-danger"
                   onClick={() => handleSuspend(selected)}
-                  style={{
-                    width: '100%', height: '38px', borderRadius: 0,
-                    backgroundColor: 'var(--red-threat)',
-                    border: '1px solid var(--red-threat)',
-                    color: '#FFFFFF',
-                    fontSize: '11px', fontWeight: 'bold', letterSpacing: '0.04em'
-                  }}
-                  onMouseOver={e => e.currentTarget.style.backgroundColor = '#C81E1E'}
-                  onMouseOut={e => e.currentTarget.style.backgroundColor = 'var(--red-threat)'}
+                  style={{ justifyContent: 'center', height: '38px', fontSize: '12px', fontWeight: '600' }}
                 >
-                  SUSPEND IMMEDIATELY
+                  Suspend User Session
                 </button>
               </div>
             </div>

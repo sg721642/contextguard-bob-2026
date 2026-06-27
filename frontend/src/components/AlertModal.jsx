@@ -3,71 +3,64 @@ import React, { useState, useEffect } from 'react';
 const ACTIONS = [
   {
     id: 'GRANT_ONE_TIME',
-    label: 'GRANT ONE-TIME ACCESS',
+    label: 'Grant One-Time Access',
     description: 'Allow this session only. Next login re-evaluated.',
-    selectedBorder: 'var(--clear)',
-    selectedBg: 'var(--clear-dim)',
-    selectedColor: 'var(--clear)'
+    color: 'var(--status-green)',
+    bg: 'var(--status-green-bg)',
+    border: 'var(--status-green-border)',
+    icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg>
   },
   {
     id: 'REQUIRE_KYC',
-    label: 'REQUIRE VIDEO KYC',
+    label: 'Require Video KYC',
     description: 'User must complete live video verification.',
-    selectedBorder: 'var(--amber)',
-    selectedBg: 'var(--amber-dim)',
-    selectedColor: 'var(--amber)'
+    color: 'var(--status-amber)',
+    bg: 'var(--status-amber-bg)',
+    border: 'var(--status-amber-border)',
+    icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M15 10l4.553-2.069A1 1 0 0 1 21 8.845v6.31a1 1 0 0 1-1.447.914L15 14M3 8a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
   },
   {
     id: 'BLOCK_ALERT',
-    label: 'BLOCK & ALERT USER',
+    label: 'Block & Alert User',
     description: 'Deny access and send SMS alert to registered mobile.',
-    selectedBorder: 'var(--red-threat)',
-    selectedBg: 'var(--red-dim)',
-    selectedColor: 'var(--red-threat)'
+    color: 'var(--status-red)',
+    bg: 'var(--status-red-bg)',
+    border: 'var(--status-red-border)',
+    icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
   },
   {
     id: 'ESCALATE',
-    label: 'ESCALATE TO SECURITY TEAM',
+    label: 'Escalate to Security Team',
     description: 'Assign to Tier-2 SOC analyst for manual investigation.',
-    selectedBorder: 'var(--orange-mid)',
-    selectedBg: 'rgba(255,107,53,0.1)',
-    selectedColor: 'var(--orange-mid)'
-  }
+    color: 'var(--status-orange)',
+    bg: 'var(--status-orange-bg)',
+    border: 'var(--status-orange-border)',
+    icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+  },
 ];
 
-// Default event data used when no eventData prop is provided
 const DEFAULT_EVENT = {
   eventId: 'EVT-9f2a3b',
   userId: 'USR-4721',
   riskScore: 73,
   signals: [
-    { name: 'DEVICE TRUST',   points: 28.4, color: 'var(--red-threat)',  label: 'Unrecognized device from Jaipur',   width: 88 },
-    { name: 'LOCATION RISK',  points: 22.1, color: 'var(--orange-mid)',  label: '847km from home city',              width: 68 },
-    { name: 'BEHAVIORAL',     points: 14.7, color: 'var(--amber)',       label: 'Keystroke similarity: 41%',         width: 46 }
+    { name: 'Device Trust',  points: 28.4, color: 'var(--status-red)',    label: 'Unrecognized device from Jaipur', width: 88 },
+    { name: 'Location Risk', points: 22.1, color: 'var(--accent)',         label: '847km from home city',            width: 68 },
+    { name: 'Behavioral',    points: 14.7, color: 'var(--status-amber)',   label: 'Keystroke similarity: 41%',       width: 46 },
   ]
 };
 
 export default function AlertModal({ isOpen, onClose, onDecision, eventData }) {
   const [selectedAction, setSelectedAction] = useState(null);
   const [reason, setReason] = useState('');
-  const [reasonFocused, setReasonFocused] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
-  // Merge provided eventData with defaults
-  const evt = eventData
-    ? { ...DEFAULT_EVENT, ...eventData }
-    : DEFAULT_EVENT;
+  const evt = eventData ? { ...DEFAULT_EVENT, ...eventData } : DEFAULT_EVENT;
 
-  // Reset state whenever modal opens
   useEffect(() => {
-    if (isOpen) {
-      setSelectedAction(null);
-      setReason('');
-      setSubmitted(false);
-    }
+    if (isOpen) { setSelectedAction(null); setReason(''); setSubmitted(false); }
   }, [isOpen]);
 
-  // Close on Escape key
   useEffect(() => {
     const handler = (e) => { if (e.key === 'Escape' && isOpen) onClose(); };
     window.addEventListener('keydown', handler);
@@ -85,373 +78,255 @@ export default function AlertModal({ isOpen, onClose, onDecision, eventData }) {
     }, 600);
   };
 
-  // Score ring colour
-  const scoreRingColor = evt.riskScore <= 60 ? 'var(--amber)' : 'var(--orange-mid)';
+  const getScoreColor = (s) => s <= 60 ? 'var(--status-amber)' : s <= 85 ? 'var(--status-orange)' : 'var(--status-red)';
+  const getScoreBg = (s) => s <= 60 ? 'var(--status-amber-bg)' : s <= 85 ? 'var(--status-orange-bg)' : 'var(--status-red-bg)';
 
   return (
     <>
-      {/* ─── Keyframes ─────────────────────────────────────────── */}
       <style>{`
-        @keyframes pulse-red-modal {
-          0%, 100% { opacity: 0.4; transform: scale(0.85); }
-          50%       { opacity: 1;   transform: scale(1.15); }
+        @keyframes modal-in {
+          from { opacity: 0; transform: scale(0.97) translateY(-12px); }
+          to   { opacity: 1; transform: scale(1) translateY(0); }
         }
-        @keyframes modal-slide-in {
-          from { transform: translateY(-24px); opacity: 0; }
-          to   { transform: translateY(0);     opacity: 1; }
-        }
-        .action-radio:hover { background-color: #0D0F14 !important; }
-        .reason-input:focus { outline: none; border-color: var(--amber) !important; }
-        .submit-btn:hover:not(:disabled) { background-color: var(--amber-light) !important; }
-        .cancel-btn:hover { background-color: #0D0F14 !important; }
+        .action-card { transition: all 0.15s ease; }
+        .action-card:hover { transform: translateY(-1px); }
       `}</style>
 
-      {/* ─── Backdrop ──────────────────────────────────────────── */}
-      <div
-        onClick={onClose}
-        style={{
-          position: 'fixed', inset: 0,
-          backgroundColor: 'rgba(0,0,0,0.88)',
-          zIndex: 9000,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center'
-        }}
-      >
-        {/* ─── Modal Card ──────────────────────────────────────── */}
-        <div
-          onClick={(e) => e.stopPropagation()}
-          style={{
-            width: '560px',
-            backgroundColor: '#0F1117',
-            border: '1px solid var(--amber)',
-            borderRadius: 0,
-            display: 'flex',
-            flexDirection: 'column',
-            animation: 'modal-slide-in 0.22s ease-out',
-            maxHeight: '90vh',
-            overflowY: 'auto'
-          }}
-        >
-          {/* ─── Header Strip ──────────────────────────────────── */}
+      {/* Backdrop */}
+      <div onClick={onClose} style={{
+        position: 'fixed', inset: 0, zIndex: 9000,
+        background: 'rgba(15,23,42,0.55)',
+        backdropFilter: 'blur(6px)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        padding: '20px',
+      }}>
+        {/* Modal */}
+        <div onClick={e => e.stopPropagation()} style={{
+          width: '100%', maxWidth: '580px',
+          background: 'var(--bg-card)',
+          border: '1px solid var(--border)',
+          borderRadius: 'var(--radius-lg)',
+          boxShadow: '0 20px 60px rgba(15,23,42,0.18), 0 8px 20px rgba(15,23,42,0.10)',
+          animation: 'modal-in 0.22s ease-out',
+          overflow: 'hidden', maxHeight: '90vh',
+          display: 'flex', flexDirection: 'column',
+        }}>
+
+          {/* ── Header */}
           <div style={{
-            height: '48px',
-            backgroundColor: 'rgba(255,45,45,0.08)',
-            borderBottom: '1px solid rgba(255,45,45,0.3)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            padding: '0 16px',
-            flexShrink: 0
+            padding: '18px 22px',
+            borderBottom: '1px solid var(--border)',
+            background: 'var(--status-red-bg)',
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            flexShrink: 0,
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <div style={{
-                width: '8px', height: '8px',
-                backgroundColor: 'var(--red-threat)',
-                borderRadius: '50%',
-                animation: 'pulse-red-modal 1.1s infinite ease-in-out'
-              }} />
-              <span className="display" style={{
-                fontSize: '14px', fontWeight: '700',
-                color: 'var(--red-threat)', letterSpacing: '0.04em'
+                width: '34px', height: '34px', borderRadius: '8px',
+                background: 'var(--status-red-bg)', border: '1px solid var(--status-red-border)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                color: 'var(--status-red)',
               }}>
-                ⚠ IDENTITY REVIEW REQUIRED
-              </span>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                  <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                  <line x1="12" y1="9" x2="12" y2="13"/>
+                  <line x1="12" y1="17" x2="12.01" y2="17"/>
+                </svg>
+              </div>
+              <div>
+                <div style={{ fontSize: '14px', fontWeight: '700', color: 'var(--status-red)', fontFamily: "'Space Grotesk', sans-serif" }}>
+                  Identity Review Required
+                </div>
+                <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>
+                  Manager action needed · Event {evt.eventId}
+                </div>
+              </div>
             </div>
-            <span className="mono" style={{ fontSize: '11px', color: 'var(--text-dim)' }}>
-              EVENT #{evt.eventId}
-            </span>
+            <button onClick={onClose} style={{
+              width: '30px', height: '30px', borderRadius: '8px', border: '1px solid var(--border)',
+              background: 'transparent', cursor: 'pointer', color: 'var(--text-tertiary)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              transition: 'all 0.15s',
+            }}
+              onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-card-alt)'; e.currentTarget.style.color = 'var(--text-primary)'; }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-tertiary)'; }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
           </div>
 
-          {/* ─── Body ────────────────────────────────────────────── */}
-          <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          {/* ── Body (scrollable) */}
+          <div style={{ overflowY: 'auto', flex: 1 }}>
+            <div style={{ padding: '22px', display: 'flex', flexDirection: 'column', gap: '22px' }}>
 
-            {/* ── Section 1: Risk Score Display ──────────────────── */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
-              {/* Score Ring */}
-              <div style={{
-                width: '120px', height: '120px',
-                border: `3px solid ${scoreRingColor}`,
-                borderRadius: 0,
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexShrink: 0,
-                position: 'relative'
-              }}>
-                {/* Corner accents */}
-                {[{top:0,left:0},{top:0,right:0},{bottom:0,left:0},{bottom:0,right:0}].map((pos, i) => (
-                  <div key={i} style={{
-                    position: 'absolute', width: '8px', height: '8px',
-                    backgroundColor: scoreRingColor,
-                    ...pos
-                  }} />
-                ))}
-                <span className="mono" style={{
-                  fontSize: '40px', fontWeight: '700',
-                  color: 'var(--amber)', lineHeight: 1
-                }}>
-                  {evt.riskScore}
-                </span>
-                <span className="mono" style={{ fontSize: '14px', color: 'var(--text-dim)' }}>
-                  / 100
-                </span>
-              </div>
-
-              {/* Score Label */}
-              <div>
-                <div className="display" style={{
-                  fontSize: '18px', fontWeight: '700',
-                  color: 'var(--orange-mid)', marginBottom: '8px'
-                }}>
-                  ELEVATED RISK
-                </div>
+              {/* Risk Score Row */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
                 <div style={{
-                  fontSize: '12px', color: 'var(--text-dim)',
-                  fontFamily: 'Inter, sans-serif', lineHeight: '1.5'
+                  width: '90px', height: '90px', borderRadius: '50%',
+                  border: `3px solid ${getScoreColor(evt.riskScore)}`,
+                  background: getScoreBg(evt.riskScore),
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                  flexShrink: 0,
                 }}>
-                  Automatic access denied.<br />
-                  Manager review required.
+                  <span style={{ fontSize: '32px', fontWeight: '800', color: getScoreColor(evt.riskScore), fontFamily: "'Space Grotesk', sans-serif", lineHeight: 1 }}>
+                    {evt.riskScore}
+                  </span>
+                  <span style={{ fontSize: '10px', color: 'var(--text-tertiary)', fontWeight: '500' }}>/100</span>
                 </div>
-                <div className="mono" style={{ fontSize: '10px', color: 'var(--text-dim)', marginTop: '10px' }}>
-                  USER: <span style={{ color: 'var(--amber)' }}>{evt.userId}</span>
-                </div>
-              </div>
-            </div>
-
-            <div style={{ height: '1px', backgroundColor: 'var(--border)' }} />
-
-            {/* ── Section 2: Contributing Signals ────────────────── */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <div className="mono" style={{
-                fontSize: '10px', color: 'var(--amber)',
-                fontWeight: 'bold', letterSpacing: '0.08em'
-              }}>
-                CONTRIBUTING SIGNALS
-              </div>
-
-              {evt.signals.map((sig, idx) => (
-                <div key={idx} style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-                    <span className="mono" style={{ fontSize: '11px', color: 'var(--text-primary)', fontWeight: 'bold' }}>
-                      {sig.name}
-                    </span>
-                    <span className="mono" style={{ fontSize: '11px', color: sig.color, fontWeight: 'bold' }}>
-                      +{sig.points} pts
-                    </span>
+                <div>
+                  <div style={{ fontSize: '18px', fontWeight: '700', color: 'var(--text-primary)', fontFamily: "'Space Grotesk', sans-serif", marginBottom: '4px' }}>
+                    Elevated Risk Score
                   </div>
-                  {/* Bar track */}
-                  <div style={{
-                    width: '100%', height: '8px',
-                    backgroundColor: 'var(--bg-void)',
-                    border: '1px solid var(--border)'
-                  }}>
-                    <div style={{
-                      width: `${sig.width}%`, height: '100%',
-                      backgroundColor: sig.color,
-                      transition: 'width 0.9s cubic-bezier(0.1,0.8,0.2,1)'
-                    }} />
+                  <div style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
+                    Automatic access has been denied.<br/>Manager review and approval required.
                   </div>
-                  <div className="mono" style={{ fontSize: '10px', color: 'var(--text-dim)' }}>
-                    {sig.label}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '10px' }}>
+                    <div style={{ width: '26px', height: '26px', borderRadius: '50%', background: 'linear-gradient(135deg,#667eea,#764ba2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: '700', color: '#fff' }}>
+                      {evt.userId?.replace('USR-','').substring(0,2)}
+                    </div>
+                    <span style={{ fontSize: '12px', fontWeight: '600', color: 'var(--accent)' }}>{evt.userId}</span>
                   </div>
                 </div>
-              ))}
-            </div>
-
-            <div style={{ height: '1px', backgroundColor: 'var(--border)' }} />
-
-            {/* ── Section 3: User Context ─────────────────────────── */}
-            <div style={{ display: 'flex', gap: '24px' }}>
-              <div style={{ flex: 1 }}>
-                <div className="mono" style={{
-                  fontSize: '10px', color: 'var(--amber)',
-                  fontWeight: 'bold', letterSpacing: '0.08em', marginBottom: '6px'
-                }}>
-                  NORMAL PATTERN
-                </div>
-                <div className="mono" style={{
-                  fontSize: '11px', color: 'var(--text-dim)', lineHeight: '1.7'
-                }}>
-                  Normal Login: Mumbai<br />
-                  Hours: 9AM – 7PM<br />
-                  Device: Trusted device
-                </div>
               </div>
-              <div style={{ flex: 1 }}>
-                <div className="mono" style={{
-                  fontSize: '10px', color: 'var(--amber)',
-                  fontWeight: 'bold', letterSpacing: '0.08em', marginBottom: '6px'
-                }}>
-                  LAST 5 DECISIONS
+
+              {/* Divider */}
+              <div style={{ height: '1px', background: 'var(--border)' }} />
+
+              {/* Contributing Signals */}
+              <div>
+                <div style={{ fontSize: '11px', fontWeight: '700', color: 'var(--text-tertiary)', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: '12px' }}>
+                  Contributing Risk Signals
                 </div>
-                <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
-                  {['CLEAR', 'CLEAR', 'CLEAR', 'CLEAR', 'STEP_UP'].map((d, i) => (
-                    <span key={i} className={`badge ${
-                      d === 'CLEAR' ? 'badge-clear' :
-                      d === 'STEP_UP' ? 'badge-step' :
-                      d === 'HUMAN_REVIEW' ? 'badge-review' : 'badge-block'
-                    }`} style={{ fontSize: '9px' }}>
-                      {d}
-                    </span>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  {evt.signals.map((sig, idx) => (
+                    <div key={idx}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px' }}>
+                        <span style={{ fontSize: '12px', fontWeight: '600', color: 'var(--text-primary)' }}>{sig.name}</span>
+                        <span style={{ fontSize: '12px', fontWeight: '700', color: sig.color, fontFamily: "'Space Grotesk', sans-serif" }}>+{sig.points} pts</span>
+                      </div>
+                      <div style={{ height: '7px', background: 'var(--bg-page)', borderRadius: '99px', overflow: 'hidden', border: '1px solid var(--border)' }}>
+                        <div style={{ width: `${sig.width}%`, height: '100%', background: `linear-gradient(90deg, ${sig.color}88, ${sig.color})`, borderRadius: '99px', transition: 'width 0.9s cubic-bezier(0.16,1,0.3,1)' }} />
+                      </div>
+                      <div style={{ fontSize: '11px', color: 'var(--text-tertiary)', marginTop: '3px' }}>{sig.label}</div>
+                    </div>
                   ))}
                 </div>
               </div>
-            </div>
 
-            <div style={{ height: '1px', backgroundColor: 'var(--border)' }} />
+              {/* Divider */}
+              <div style={{ height: '1px', background: 'var(--border)' }} />
 
-            {/* ── Section 4: Manager Decision ────────────────────── */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              <div className="mono" style={{
-                fontSize: '10px', color: 'var(--amber)',
-                fontWeight: 'bold', letterSpacing: '0.08em'
-              }}>
-                SELECT ACTION
+              {/* Context */}
+              <div style={{ display: 'flex', gap: '20px' }}>
+                <div style={{ flex: 1, padding: '12px', background: 'var(--bg-card-alt)', borderRadius: '8px', border: '1px solid var(--border)' }}>
+                  <div style={{ fontSize: '10px', fontWeight: '700', color: 'var(--text-tertiary)', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: '8px' }}>Normal Pattern</div>
+                  <div style={{ fontSize: '12px', color: 'var(--text-secondary)', lineHeight: '1.7' }}>
+                    Location: Mumbai<br/>Hours: 9AM – 7PM<br/>Device: Trusted
+                  </div>
+                </div>
+                <div style={{ flex: 1, padding: '12px', background: 'var(--bg-card-alt)', borderRadius: '8px', border: '1px solid var(--border)' }}>
+                  <div style={{ fontSize: '10px', fontWeight: '700', color: 'var(--text-tertiary)', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: '8px' }}>Last 5 Decisions</div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                    {['CLEAR','CLEAR','CLEAR','CLEAR','STEP_UP'].map((d,i) => (
+                      <span key={i} className={`badge ${d==='CLEAR'?'badge-clear':d==='STEP_UP'?'badge-step':d==='HUMAN_REVIEW'?'badge-review':'badge-block'}`} style={{ fontSize: '9px', padding: '2px 7px' }}>{d}</span>
+                    ))}
+                  </div>
+                </div>
               </div>
 
-              {/* Action Radio Buttons */}
-              {ACTIONS.map((action) => {
-                const isSelected = selectedAction === action.id;
-                return (
-                  <div
-                    key={action.id}
-                    className="action-radio"
-                    onClick={() => setSelectedAction(action.id)}
-                    style={{
-                      padding: '10px 14px',
-                      backgroundColor: isSelected ? action.selectedBg : '#080A0E',
-                      border: `1px solid ${isSelected ? action.selectedBorder : 'var(--border)'}`,
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '12px',
-                      transition: 'all 0.15s ease'
-                    }}
-                  >
-                    {/* Custom Radio Dot */}
-                    <div style={{
-                      width: '14px', height: '14px',
-                      border: `2px solid ${isSelected ? action.selectedBorder : 'var(--border)'}`,
-                      borderRadius: 0,
-                      flexShrink: 0,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center'
-                    }}>
-                      {isSelected && (
+              {/* Divider */}
+              <div style={{ height: '1px', background: 'var(--border)' }} />
+
+              {/* Action Selection */}
+              <div>
+                <div style={{ fontSize: '11px', fontWeight: '700', color: 'var(--text-tertiary)', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: '10px' }}>
+                  Select Action
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {ACTIONS.map(action => {
+                    const selected = selectedAction === action.id;
+                    return (
+                      <div key={action.id} className="action-card" onClick={() => setSelectedAction(action.id)} style={{
+                        padding: '12px 14px', borderRadius: '8px', cursor: 'pointer',
+                        border: `1px solid ${selected ? action.border : 'var(--border)'}`,
+                        background: selected ? action.bg : 'var(--bg-card-alt)',
+                        display: 'flex', alignItems: 'center', gap: '12px',
+                      }}>
                         <div style={{
-                          width: '6px', height: '6px',
-                          backgroundColor: action.selectedBorder
-                        }} />
-                      )}
-                    </div>
-                    <div style={{ flex: 1 }}>
-                      <div className="mono" style={{
-                        fontSize: '12px', fontWeight: 'bold',
-                        color: isSelected ? action.selectedColor : 'var(--text-primary)'
-                      }}>
-                        {action.label}
+                          width: '18px', height: '18px', borderRadius: '50%',
+                          border: `2px solid ${selected ? action.color : 'var(--border-strong)'}`,
+                          background: selected ? action.color : 'transparent',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          flexShrink: 0, color: '#fff', transition: 'all 0.15s',
+                        }}>
+                          {selected && <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round"><path d="M20 6L9 17l-5-5"/></svg>}
+                        </div>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontSize: '13px', fontWeight: '600', color: selected ? action.color : 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <span style={{ color: selected ? action.color : 'var(--text-tertiary)' }}>{action.icon}</span>
+                            {action.label}
+                          </div>
+                          <div style={{ fontSize: '11px', color: 'var(--text-tertiary)', marginTop: '2px' }}>{action.description}</div>
+                        </div>
                       </div>
-                      <div className="mono" style={{
-                        fontSize: '10px', color: 'var(--text-dim)', marginTop: '2px'
-                      }}>
-                        {action.description}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
+                    );
+                  })}
+                </div>
 
-              {/* Reason Input */}
-              <textarea
-                className="reason-input mono"
-                rows={3}
-                placeholder="Enter reason for decision (required)"
-                value={reason}
-                onChange={(e) => setReason(e.target.value)}
-                onFocus={() => setReasonFocused(true)}
-                onBlur={() => setReasonFocused(false)}
-                style={{
-                  width: '100%',
-                  backgroundColor: '#080A0E',
-                  border: `1px solid ${reasonFocused ? 'var(--amber)' : '#1E2533'}`,
-                  color: 'var(--text-primary)',
-                  padding: '10px',
-                  fontFamily: 'JetBrains Mono, monospace',
-                  fontSize: '12px',
-                  borderRadius: 0,
-                  resize: 'none',
-                  outline: 'none',
-                  transition: 'border-color 0.15s',
-                  marginTop: '4px'
-                }}
-              />
+                {/* Reason textarea */}
+                <textarea
+                  rows={3}
+                  placeholder="Enter reason for this decision (required)…"
+                  value={reason}
+                  onChange={e => setReason(e.target.value)}
+                  style={{
+                    width: '100%', marginTop: '12px', padding: '10px 12px',
+                    background: 'var(--bg-card-alt)', border: '1px solid var(--border)',
+                    borderRadius: '8px', color: 'var(--text-primary)', fontSize: '13px',
+                    fontFamily: "'Inter', sans-serif", resize: 'none', outline: 'none',
+                    transition: 'border-color 0.15s',
+                  }}
+                  onFocus={e => { e.target.style.borderColor = 'var(--accent)'; }}
+                  onBlur={e => { e.target.style.borderColor = 'var(--border)'; }}
+                />
+              </div>
             </div>
           </div>
 
-          {/* ─── Footer ──────────────────────────────────────────── */}
+          {/* ── Footer */}
           <div style={{
-            padding: '14px 20px',
-            borderTop: '1px solid var(--border)',
-            backgroundColor: 'var(--bg-elevated)',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '10px',
-            flexShrink: 0
+            padding: '14px 22px', borderTop: '1px solid var(--border)',
+            background: 'var(--bg-card-alt)', display: 'flex', alignItems: 'center',
+            justifyContent: 'space-between', flexShrink: 0,
           }}>
-            <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-              {/* Submit */}
-              <button
-                className="submit-btn display"
-                onClick={handleSubmit}
-                disabled={!selectedAction || !reason.trim() || submitted}
-                style={{
-                  minWidth: '180px',
-                  height: '42px',
-                  backgroundColor: selectedAction && reason.trim() ? 'var(--amber)' : '#2A2A2A',
-                  border: 'none',
-                  color: selectedAction && reason.trim() ? '#000000' : 'var(--text-dim)',
-                  fontWeight: '700',
-                  fontSize: '13px',
-                  cursor: selectedAction && reason.trim() ? 'pointer' : 'not-allowed',
-                  letterSpacing: '0.04em',
-                  borderRadius: 0,
-                  transition: 'background-color 0.2s'
-                }}
-              >
-                {submitted ? 'SUBMITTING...' : 'SUBMIT DECISION'}
-              </button>
-
-              {/* Cancel */}
-              <button
-                className="cancel-btn mono"
-                onClick={onClose}
-                style={{
-                  height: '42px',
-                  padding: '0 20px',
-                  backgroundColor: 'transparent',
-                  border: '1px solid #1E2533',
-                  color: 'var(--text-dim)',
-                  fontSize: '12px',
-                  cursor: 'pointer',
-                  letterSpacing: '0.04em',
-                  borderRadius: 0,
-                  transition: 'background-color 0.2s'
-                }}
-              >
-                CANCEL
-              </button>
+            <div style={{ fontSize: '11px', color: 'var(--text-tertiary)' }}>
+              Decision logged to audit trail · <span style={{ color: 'var(--accent)', fontWeight: '600' }}>EMP-007</span>
             </div>
-
-            {/* Audit trail notice */}
-            <div className="mono" style={{ fontSize: '10px', color: 'var(--text-dim)' }}>
-              This decision is logged to the audit trail with your Employee ID:&nbsp;
-              <span style={{ color: 'var(--amber)' }}>EMP-007</span>
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button onClick={onClose} style={{
+                padding: '9px 18px', borderRadius: '7px', border: '1px solid var(--border)',
+                background: 'transparent', color: 'var(--text-secondary)', fontSize: '13px',
+                fontWeight: '500', cursor: 'pointer', fontFamily: "'Inter', sans-serif",
+                transition: 'all 0.15s',
+              }}
+                onMouseEnter={e => { e.currentTarget.style.background = 'var(--bg-page)'; }}
+                onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
+              >Cancel</button>
+              <button onClick={handleSubmit} disabled={!selectedAction || !reason.trim() || submitted} style={{
+                padding: '9px 22px', borderRadius: '7px', border: 'none',
+                background: selectedAction && reason.trim() ? 'var(--accent)' : 'var(--border)',
+                color: selectedAction && reason.trim() ? '#fff' : 'var(--text-tertiary)',
+                fontSize: '13px', fontWeight: '600', cursor: selectedAction && reason.trim() ? 'pointer' : 'not-allowed',
+                fontFamily: "'Inter', sans-serif", transition: 'all 0.18s',
+                boxShadow: selectedAction && reason.trim() ? '0 2px 8px rgba(255,106,19,0.30)' : 'none',
+              }}
+                onMouseEnter={e => { if (selectedAction && reason.trim()) { e.currentTarget.style.background = 'var(--accent-light)'; e.currentTarget.style.transform = 'translateY(-1px)'; }}}
+                onMouseLeave={e => { e.currentTarget.style.background = selectedAction && reason.trim() ? 'var(--accent)' : 'var(--border)'; e.currentTarget.style.transform = 'translateY(0)'; }}
+              >
+                {submitted ? 'Submitting…' : 'Submit Decision'}
+              </button>
             </div>
           </div>
-
         </div>
       </div>
     </>

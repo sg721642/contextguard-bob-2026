@@ -192,7 +192,7 @@ class EmployeeAnalyzeResponse(BaseModel):
 
 @app.get("/")
 def read_root():
-    return {"status": "ContextGuard API running", "version": "1.0.0"}
+    return {"status": "ContextGuard API running", "version": "2.0.0", "risk_engine": "normalized-100"}
 
 @app.post("/api/v1/analyze", response_model=AnalyzeResponse)
 def analyze_risk(payload: AnalyzeRequest):

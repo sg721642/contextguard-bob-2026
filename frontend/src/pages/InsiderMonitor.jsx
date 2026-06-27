@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 // ─── Hardcoded employee data ────────────────────────────────────────────────
 const EMPLOYEES = [
@@ -170,16 +170,104 @@ const isOutsideHours   = (emp) => emp.loginHour < emp.normalHours.start || emp.l
 const isHighRecords    = (emp) => emp.records > emp.normalRecords * 2;
 const isHighExport     = (emp) => emp.dataExported > 10;
 
-const criticalEmployees = EMPLOYEES.filter(e => e.risk > 80);
+const API_BASE = 'http://localhost:8000/api/v1';
 
 export default function InsiderMonitor() {
+  const [employees, setEmployees] = useState(EMPLOYEES);
+  const [isDemoMode, setIsDemoMode] = useState(true);
   const [selected, setSelected] = useState(null);
   const [empStatuses, setEmpStatuses] = useState(() =>
     Object.fromEntries(EMPLOYEES.map(e => [e.id, 'ACTIVE']))
   );
 
+  const criticalEmployees = employees.filter(e => e.risk > 80);
+
+  // Fetch employees from backend on mount
+  useEffect(() => {
+    const fetchEmployees = async () => {
+      try {
+        const res = await fetch(`${API_BASE}/employees`);
+        if (!res.ok) throw new Error();
+        const data = await res.json();
+        
+        // Merge backend data with local metrics baselines and descriptions
+        const merged = data.map(fe => {
+          const match = EMPLOYEES.find(e => e.id === fe.emp_id);
+          if (match) {
+            return {
+              ...match,
+              name: fe.name,
+              department: fe.department,
+              normalRecords: fe.normal_records_per_day,
+              access_level: fe.access_level
+            };
+          }
+          return {
+            id: fe.emp_id,
+            name: fe.name,
+            department: fe.department,
+            risk: 10,
+            level: 'LOW',
+            records: fe.normal_records_per_day,
+            normalRecords: fe.normal_records_per_day,
+            loginTime: '10:00 AM',
+            dataExported: 0,
+            normalHours: { start: 9, end: 18 },
+            loginHour: 10,
+            analysis: `ANALYZING: ${fe.emp_id} — ${fe.name}\nNo critical activity anomalies detected.`
+          };
+        });
+        setEmployees(merged);
+        setIsDemoMode(false);
+      } catch (e) {
+        console.log("Backend offline. Fallback to static demo mode.");
+        setIsDemoMode(true);
+      }
+    };
+    fetchEmployees();
+  }, []);
+
   const handleAction = (empId, action) => {
     setEmpStatuses(prev => ({ ...prev, [empId]: action }));
+  };
+
+  const handleSuspend = async (emp) => {
+    try {
+      const res = await fetch(`${API_BASE}/employee/analyze`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          emp_id: emp.id,
+          records_accessed_today: emp.records,
+          login_hour: emp.loginHour,
+          data_exported_mb: emp.dataExported
+        })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        // Dynamically update the employee's risk score and description in the UI
+        setEmployees(prev => prev.map(e => {
+          if (e.id === emp.id) {
+            return {
+              ...e,
+              risk: data.risk_score,
+              level: data.risk_level,
+              analysis: data.narrative
+            };
+          }
+          return e;
+        }));
+        setSelected(prev => ({
+          ...prev,
+          risk: data.risk_score,
+          level: data.risk_level,
+          analysis: data.narrative
+        }));
+      }
+    } catch (e) {
+      console.log("Backend unreachable during suspension analysis. Performing offline override.");
+    }
+    handleAction(emp.id, 'SUSPENDED');
   };
 
   return (
@@ -270,6 +358,18 @@ export default function InsiderMonitor() {
             </div>
 
             <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+              <div className="mono" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', marginRight: '10px' }}>
+                <span style={{
+                  width: '8px',
+                  height: '8px',
+                  backgroundColor: isDemoMode ? 'var(--amber)' : 'var(--clear)',
+                  borderRadius: '50%',
+                  display: 'inline-block'
+                }}></span>
+                <span style={{ color: isDemoMode ? 'var(--amber)' : 'var(--clear)', letterSpacing: '0.1em', fontWeight: 'bold' }}>
+                  {isDemoMode ? 'DEMO MODE' : 'API CONNECTED'}
+                </span>
+              </div>
               <span className="mono" style={{
                 fontSize: '11px', fontWeight: 'bold',
                 color: 'var(--amber)',
@@ -277,7 +377,7 @@ export default function InsiderMonitor() {
                 padding: '5px 12px',
                 backgroundColor: 'var(--amber-dim)'
               }}>
-                {EMPLOYEES.length} EMPLOYEES MONITORED
+                {employees.length} EMPLOYEES MONITORED
               </span>
               <span className="mono" style={{
                 fontSize: '11px', fontWeight: 'bold',
@@ -302,7 +402,7 @@ export default function InsiderMonitor() {
               gridTemplateColumns: 'repeat(2, 1fr)',
               gap: '14px'
             }}>
-              {EMPLOYEES.map((emp) => {
+              {employees.map((emp) => {
                 const isSelected   = selected?.id === emp.id;
                 const status       = empStatuses[emp.id];
                 const badOutsideHrs = isOutsideHours(emp);
@@ -605,7 +705,7 @@ export default function InsiderMonitor() {
 
                 <button
                   className="action-btn mono"
-                  onClick={() => handleAction(selected.id, 'SUSPENDED')}
+                  onClick={() => handleSuspend(selected)}
                   style={{
                     width: '100%', height: '38px', borderRadius: 0,
                     backgroundColor: 'var(--red-threat)',

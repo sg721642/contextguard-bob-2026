@@ -59,6 +59,7 @@ export default function Dashboard() {
     avg_trust_score: 31.4,
     clear_percentage: 62
   });
+  const [isDemoMode, setIsDemoMode] = useState(true);
   const [signalScores, setSignalScores] = useState({
     behavioral: 65,
     location: 35,
@@ -84,33 +85,35 @@ export default function Dashboard() {
     try {
       // Fetch live feed
       const feedRes = await fetch(`${API_BASE}/live-feed`);
-      if (feedRes.ok) {
-        const feedData = await feedRes.json();
-        if (feedData && feedData.length > 0) {
-          setEvents(feedData);
-        }
+      if (!feedRes.ok) throw new Error();
+      const feedData = await feedRes.json();
+      if (feedData && feedData.length > 0) {
+        setEvents(feedData);
       }
       
       // Fetch stats
       const statsRes = await fetch(`${API_BASE}/dashboard/stats`);
-      if (statsRes.ok) {
-        const statsData = await statsRes.json();
-        setStats(statsData);
-      }
+      if (!statsRes.ok) throw new Error();
+      const statsData = await statsRes.json();
+      setStats(statsData);
+      
+      setIsDemoMode(false);
     } catch (e) {
       console.log("Backend API not reachable. Operating with fallback simulation data.");
+      setIsDemoMode(true);
     }
   };
 
   useEffect(() => {
     fetchData();
-    // Poll backend every 10 seconds
-    const interval = setInterval(fetchData, 10000);
+    // Poll backend every 5 seconds for live feed and stats
+    const interval = setInterval(fetchData, 5000);
     return () => clearInterval(interval);
   }, []);
 
-  // Auto-simulate a new threat event every 4 seconds
+  // Auto-simulate a new threat event every 4 seconds only if in Demo Mode
   useEffect(() => {
+    if (!isDemoMode) return;
     const simulationTimer = setInterval(() => {
       const newEvt = generateFakeEvent();
       setEvents(prev => [newEvt, ...prev.slice(0, 49)]);
@@ -133,37 +136,40 @@ export default function Dashboard() {
     }, 4000);
 
     return () => clearInterval(simulationTimer);
-  }, []);
+  }, [isDemoMode]);
 
   // Simulator Triggers
   const handleSimulate = async (type) => {
     let payload;
+    let flashColor = 'amber';
     if (type === 'NORMAL') {
       payload = {
-        user_id: `USR-${Math.floor(Math.random() * 8765) + 1234}`,
-        ip_address: "49.23.44.12",
-        city: CITIES[Math.floor(Math.random() * CITIES.length)],
-        login_hour: new Date().getHours(),
+        user_id: "USR-1234",
+        ip_address: "49.36.12.44",
+        city: "Mumbai",
+        login_hour: 12,
         is_new_device: false,
-        keystroke_variance_ms: 85.0 + Math.random() * 10,
+        keystroke_variance_ms: 85.2,
         last_login_city: "Mumbai",
         is_recovery_attempt: false,
         records_accessed: 5,
         transaction_amount: 1500
       };
+      flashColor = 'green';
     } else if (type === 'ATTACKER') {
       payload = {
-        user_id: `USR-${Math.floor(Math.random() * 8765) + 1234}`,
-        ip_address: "203.45.112.9", // foreign IP
-        city: "Pune",
-        login_hour: 2, // night hours
+        user_id: "USR-9999",
+        ip_address: "185.220.101.5",
+        city: "Unknown",
+        login_hour: 3,
         is_new_device: true,
-        keystroke_variance_ms: 280.0,
-        last_login_city: "Kolkata",
+        keystroke_variance_ms: 287,
+        last_login_city: "Mumbai",
         is_recovery_attempt: true,
-        records_accessed: 12,
-        transaction_amount: 85000 // high amount
+        records_accessed: 200,
+        transaction_amount: 95000
       };
+      flashColor = 'red';
     } else { // INSIDER
       payload = {
         user_id: `USR-${Math.floor(Math.random() * 8765) + 1234}`,
@@ -177,6 +183,7 @@ export default function Dashboard() {
         records_accessed: 120, // abnormal records
         transaction_amount: 45000
       };
+      flashColor = 'orange';
     }
 
     try {
@@ -196,7 +203,8 @@ export default function Dashboard() {
           decision: analyzed.decision,
           top_signal: analyzed.decision === 'CLEAR' ? 'keystroke_variance_ms' : 'location_risk_score',
           timestamp: analyzed.timestamp.replace('T', ' ').substring(0, 19),
-          isNew: true
+          isNew: true,
+          flashColor: flashColor
         };
         setEvents(prev => [backendEvt, ...prev.slice(0, 49)]);
         fetchData(); // reload stats
@@ -207,6 +215,8 @@ export default function Dashboard() {
       // Fallback local simulation if backend fails
       const forcedDecision = type === 'NORMAL' ? 'CLEAR' : type === 'ATTACKER' ? 'BLOCK' : 'HUMAN_REVIEW';
       const localEvt = generateFakeEvent(forcedDecision);
+      localEvt.flashColor = flashColor;
+      localEvt.isNew = true;
       setEvents(prev => [localEvt, ...prev.slice(0, 49)]);
       
       setStats(prev => ({
@@ -254,6 +264,23 @@ export default function Dashboard() {
       position: 'relative'
     }}>
       
+      <style>{`
+        @keyframes flash-green {
+          0% { background-color: rgba(0, 255, 135, 0.4); }
+          100% { background-color: transparent; }
+        }
+        @keyframes flash-red {
+          0% { background-color: rgba(255, 45, 45, 0.4); }
+          100% { background-color: transparent; }
+        }
+        .flash-green-row {
+          animation: flash-green 1.5s ease-out;
+        }
+        .flash-red-row {
+          animation: flash-red 1.5s ease-out;
+        }
+      `}</style>
+
       {/* 1. TOP BAR */}
       <header style={{
         height: '52px',
@@ -278,7 +305,18 @@ export default function Dashboard() {
         </div>
         
         <div className="mono" style={{ display: 'flex', alignItems: 'center', gap: '16px', fontSize: '11px' }}>
-          <span style={{ color: 'var(--clear)', letterSpacing: '0.1em' }}>● SYSTEM OPERATIONAL</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span style={{
+              width: '8px',
+              height: '8px',
+              backgroundColor: isDemoMode ? 'var(--amber)' : 'var(--clear)',
+              borderRadius: '50%',
+              display: 'inline-block'
+            }}></span>
+            <span style={{ color: isDemoMode ? 'var(--amber)' : 'var(--clear)', letterSpacing: '0.1em' }}>
+              {isDemoMode ? 'DEMO MODE' : 'API CONNECTED'}
+            </span>
+          </div>
           <span style={{ color: 'var(--text-mono)' }}>|</span>
           <span style={{ color: 'var(--text-primary)', letterSpacing: '0.05em' }}>{systemTime}</span>
         </div>
@@ -422,7 +460,11 @@ export default function Dashboard() {
                 {events.map((evt, idx) => (
                   <tr 
                     key={evt.event_id + idx}
-                    className={evt.isNew ? 'flash-row' : ''}
+                    className={
+                      evt.isNew 
+                        ? (evt.flashColor === 'green' ? 'flash-green-row' : evt.flashColor === 'red' ? 'flash-red-row' : 'flash-row') 
+                        : ''
+                    }
                     onClick={() => {
                       if (evt.decision === 'HUMAN_REVIEW') {
                         setModalEvent({

@@ -1,493 +1,628 @@
-import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState } from 'react';
 
-const API_BASE = 'http://localhost:8000/api/v1';
+// ─── Hardcoded employee data ────────────────────────────────────────────────
+const EMPLOYEES = [
+  {
+    id: 'EMP-001', name: 'Rajesh Kumar',  department: 'Loans',      risk: 82,  level: 'HIGH',
+    records: 127, normalRecords: 42,  loginTime: '02:34 AM', dataExported: 45.2,
+    normalHours: { start: 9, end: 18 }, loginHour: 2,
+    analysis: `ANALYZING: EMP-001 — Rajesh Kumar | Loans Department
+RISK SCORE: 82/100 | LEVEL: HIGH
 
-const fallbackEmployees = [
-  { emp_id: "EMP-001", name: "Aarav Patel", department: "Retail", normal_records_per_day: 24, access_level: "L3" },
-  { emp_id: "EMP-002", name: "Ananya Rao", department: "IT", normal_records_per_day: 35, access_level: "L2" },
-  { emp_id: "EMP-003", name: "Vihaan Sharma", department: "Loans", normal_records_per_day: 15, access_level: "L1" },
-  { emp_id: "EMP-004", name: "Diya Joshi", department: "Operations", normal_records_per_day: 40, access_level: "L2" },
-  { emp_id: "EMP-005", name: "Aditya Iyer", department: "Compliance", normal_records_per_day: 18, access_level: "L3" },
-  { emp_id: "EMP-006", name: "Ishaan Gupta", department: "IT", normal_records_per_day: 30, access_level: "L1" },
-  { emp_id: "EMP-007", name: "Sai Reddy", department: "Retail", normal_records_per_day: 22, access_level: "L2" },
-  { emp_id: "EMP-008", name: "Kavya Pillai", department: "Compliance", normal_records_per_day: 28, access_level: "L3" },
-  { emp_id: "EMP-009", name: "Arjun Nair", department: "Loans", normal_records_per_day: 12, access_level: "L1" },
-  { emp_id: "EMP-010", name: "Vivaan Choudhury", department: "Operations", normal_records_per_day: 45, access_level: "L2" }
+Employee accessed 127 customer loan records (3.0x baseline of 42) and exported
+45.2MB of data between 02:00–03:30 AM, outside approved working hours of
+9AM–6PM. Access pattern matches known data exfiltration signatures. Combined
+with login from new IP (117.x.x.x) not associated with office network, this
+warrants immediate investigation.
+
+RECOMMENDED ACTION: TEMPORARY_SUSPEND + SECURITY AUDIT`
+  },
+  {
+    id: 'EMP-002', name: 'Priya Sharma',  department: 'IT',         risk: 15,  level: 'LOW',
+    records: 38,  normalRecords: 40,  loginTime: '10:12 AM', dataExported: 0,
+    normalHours: { start: 9, end: 18 }, loginHour: 10,
+    analysis: `ANALYZING: EMP-002 — Priya Sharma | IT Department
+RISK SCORE: 15/100 | LEVEL: LOW
+
+No anomalies detected. Record access count (38) within baseline range of 40.
+Login at 10:12 AM falls within approved working hours. Zero data exports recorded.
+Standard IT operations profile. No further action required.
+
+RECOMMENDED ACTION: NO_ACTION — Continue routine monitoring`
+  },
+  {
+    id: 'EMP-003', name: 'Amit Singh',    department: 'Operations', risk: 61,  level: 'MEDIUM',
+    records: 89,  normalRecords: 45,  loginTime: '08:02 PM', dataExported: 12,
+    normalHours: { start: 9, end: 18 }, loginHour: 20,
+    analysis: `ANALYZING: EMP-003 — Amit Singh | Operations Department
+RISK SCORE: 61/100 | LEVEL: MEDIUM
+
+Employee accessed 89 records (1.98x baseline of 45) and exported 12MB of data
+at 8:02 PM, marginally outside approved working hours. Elevated but not yet
+critical. The data export volume (12MB) is above the 10MB threshold.
+Pattern is consistent with end-of-day batch operations but warrants monitoring.
+
+RECOMMENDED ACTION: MONITOR — Review export content logs`
+  },
+  {
+    id: 'EMP-004', name: 'Neha Patel',    department: 'Compliance', risk: 8,   level: 'LOW',
+    records: 22,  normalRecords: 30,  loginTime: '11:05 AM', dataExported: 2,
+    normalHours: { start: 9, end: 18 }, loginHour: 11,
+    analysis: `ANALYZING: EMP-004 — Neha Patel | Compliance Department
+RISK SCORE: 8/100 | LEVEL: LOW
+
+No anomalies detected. Record access below baseline (22 vs 30). Login at
+11:05 AM is within normal working hours. Data export of 2MB is within
+acceptable limits. Standard compliance workflow observed.
+
+RECOMMENDED ACTION: NO_ACTION — Normal behaviour confirmed`
+  },
+  {
+    id: 'EMP-005', name: 'Suresh Yadav',  department: 'Retail',    risk: 91,  level: 'CRITICAL',
+    records: 203, normalRecords: 50,  loginTime: '03:11 AM', dataExported: 78,
+    normalHours: { start: 9, end: 18 }, loginHour: 3,
+    analysis: `ANALYZING: EMP-005 — Suresh Yadav | Retail Department
+RISK SCORE: 91/100 | LEVEL: CRITICAL
+
+CRITICAL ANOMALY DETECTED. Employee accessed 203 retail customer records
+(4.06x baseline of 50) and exported 78MB of data at 03:11 AM — deep outside
+approved hours. This volume and timing is strongly correlated with exfiltration
+attempts. Unrecognized device fingerprint detected. IP geolocation mismatch.
+
+RECOMMENDED ACTION: IMMEDIATE_SUSPEND + ESCALATE TO CISO`
+  },
+  {
+    id: 'EMP-006', name: 'Ananya Roy',    department: 'IT',         risk: 25,  level: 'LOW',
+    records: 41,  normalRecords: 40,  loginTime: '02:15 PM', dataExported: 5,
+    normalHours: { start: 9, end: 18 }, loginHour: 14,
+    analysis: `ANALYZING: EMP-006 — Ananya Roy | IT Department
+RISK SCORE: 25/100 | LEVEL: LOW
+
+Minor elevation in record access (41 vs 40 baseline). Login at 2:15 PM is
+within normal working hours. Data export of 5MB is within acceptable range.
+No anomalous patterns detected. Routine IT administration workload.
+
+RECOMMENDED ACTION: NO_ACTION — Continue standard monitoring`
+  },
+  {
+    id: 'EMP-007', name: 'Vikram Nair',   department: 'Loans',     risk: 44,  level: 'MEDIUM',
+    records: 65,  normalRecords: 42,  loginTime: '07:48 PM', dataExported: 8,
+    normalHours: { start: 9, end: 18 }, loginHour: 19,
+    analysis: `ANALYZING: EMP-007 — Vikram Nair | Loans Department
+RISK SCORE: 44/100 | LEVEL: MEDIUM
+
+Record access at 65 (1.55x baseline of 42). Late login at 7:48 PM marginally
+outside approved hours. Data export of 8MB is within acceptable bounds.
+Pattern is consistent with end-of-month loan processing. Low-to-medium concern.
+
+RECOMMENDED ACTION: MONITOR — Flag for supervisor review if pattern persists`
+  },
+  {
+    id: 'EMP-008', name: 'Kavya Reddy',   department: 'Operations', risk: 12,  level: 'LOW',
+    records: 18,  normalRecords: 35,  loginTime: '09:22 AM', dataExported: 1,
+    normalHours: { start: 9, end: 18 }, loginHour: 9,
+    analysis: `ANALYZING: EMP-008 — Kavya Reddy | Operations Department
+RISK SCORE: 12/100 | LEVEL: LOW
+
+No anomalies detected. Record access well below baseline (18 vs 35).
+Login at 9:22 AM within approved hours. Data export minimal (1MB).
+Standard light-duty operations observed.
+
+RECOMMENDED ACTION: NO_ACTION — Normal pattern confirmed`
+  },
+  {
+    id: 'EMP-009', name: 'Rohit Gupta',   department: 'Retail',    risk: 73,  level: 'HIGH',
+    records: 110, normalRecords: 48,  loginTime: '11:52 PM', dataExported: 31,
+    normalHours: { start: 9, end: 18 }, loginHour: 23,
+    analysis: `ANALYZING: EMP-009 — Rohit Gupta | Retail Department
+RISK SCORE: 73/100 | LEVEL: HIGH
+
+Employee accessed 110 retail records (2.29x baseline of 48) at 11:52 PM,
+significantly outside approved working hours of 9AM–6PM. Data export of 31MB
+is well above the 10MB threshold. Night-time access combined with elevated
+record count is consistent with unauthorized data harvesting behaviour.
+
+RECOMMENDED ACTION: TEMPORARY_SUSPEND + MANAGER NOTIFICATION`
+  },
+  {
+    id: 'EMP-010', name: 'Divya Mehta',   department: 'Compliance', risk: 5,   level: 'LOW',
+    records: 15,  normalRecords: 28,  loginTime: '10:40 AM', dataExported: 0,
+    normalHours: { start: 9, end: 18 }, loginHour: 10,
+    analysis: `ANALYZING: EMP-010 — Divya Mehta | Compliance Department
+RISK SCORE: 5/100 | LEVEL: LOW
+
+No anomalies detected. Record count (15) below baseline. Login at 10:40 AM
+is within approved hours. No data exports recorded.
+Optimal compliance behaviour observed.
+
+RECOMMENDED ACTION: NO_ACTION — Trusted profile`
+  }
 ];
 
+// ─── Colour helpers ─────────────────────────────────────────────────────────
+const getRiskColor = (level) => {
+  if (level === 'CRITICAL') return 'var(--red-threat)';
+  if (level === 'HIGH')     return 'var(--orange-mid)';
+  if (level === 'MEDIUM')   return 'var(--amber)';
+  return 'var(--clear)';
+};
+
+const getRiskBg = (level) => {
+  if (level === 'CRITICAL') return 'var(--red-dim)';
+  if (level === 'HIGH')     return 'rgba(255,107,53,0.12)';
+  if (level === 'MEDIUM')   return 'var(--amber-dim)';
+  return 'var(--clear-dim)';
+};
+
+const getRiskBorder = (level) => {
+  if (level === 'CRITICAL') return 'rgba(255,45,45,0.4)';
+  if (level === 'HIGH')     return 'rgba(255,107,53,0.4)';
+  if (level === 'MEDIUM')   return 'var(--border-amber)';
+  return 'rgba(0,255,135,0.4)';
+};
+
+const getDeptColor = (dept) => {
+  const map = { Loans: 'var(--amber)', IT: 'var(--orange-mid)', Operations: 'var(--text-mono)', Retail: '#A0D0FF', Compliance: 'var(--clear)' };
+  return map[dept] || 'var(--text-dim)';
+};
+
+const isOutsideHours   = (emp) => emp.loginHour < emp.normalHours.start || emp.loginHour >= emp.normalHours.end;
+const isHighRecords    = (emp) => emp.records > emp.normalRecords * 2;
+const isHighExport     = (emp) => emp.dataExported > 10;
+
+const criticalEmployees = EMPLOYEES.filter(e => e.risk > 80);
+
 export default function InsiderMonitor() {
-  const [employees, setEmployees] = useState(fallbackEmployees);
-  const [selectedEmp, setSelectedEmp] = useState(fallbackEmployees[0]);
+  const [selected, setSelected] = useState(null);
+  const [empStatuses, setEmpStatuses] = useState(() =>
+    Object.fromEntries(EMPLOYEES.map(e => [e.id, 'ACTIVE']))
+  );
 
-  // Simulation Parameters
-  const [recordsAccessed, setRecordsAccessed] = useState(selectedEmp.normal_records_per_day * 2);
-  const [loginHour, setLoginHour] = useState(2); // default 2 AM
-  const [dataExported, setDataExported] = useState(45.2);
-
-  // Results
-  const [analysisResult, setAnalysisResult] = useState(null);
-  const [loading, setLoading] = useState(false);
-
-  // Fetch employees on load
-  useEffect(() => {
-    const fetchEmployees = async () => {
-      try {
-        const res = await fetch(`${API_BASE}/employees`);
-        if (res.ok) {
-          const data = await res.json();
-          if (data && data.length > 0) {
-            setEmployees(data);
-            setSelectedEmp(data[0]);
-            setRecordsAccessed(data[0].normal_records_per_day * 2);
-          }
-        }
-      } catch (e) {
-        console.log("Backend offline, utilizing cached fallback employee details.");
-      }
-    };
-    fetchEmployees();
-  }, []);
-
-  // Update records accessed when selected employee changes
-  const handleSelectEmployee = (emp) => {
-    setSelectedEmp(emp);
-    setRecordsAccessed(emp.normal_records_per_day * 2);
-  };
-
-  // Run Rule Engine Analysis
-  const handleRunAnalysis = async () => {
-    setLoading(true);
-    try {
-      const payload = {
-        emp_id: selectedEmp.emp_id,
-        records_accessed_today: parseInt(recordsAccessed),
-        login_hour: parseInt(loginHour),
-        data_exported_mb: parseFloat(dataExported)
-      };
-
-      const res = await fetch(`${API_BASE}/employee/analyze`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-
-      if (res.ok) {
-        const data = await res.json();
-        setAnalysisResult(data);
-      } else {
-        throw new Error();
-      }
-    } catch (e) {
-      // Local fallback calculation if backend is offline
-      const normal = selectedEmp.normal_records_per_day;
-      const ratio = recordsAccessed / normal;
-      
-      let recordsPoints = 0;
-      if (ratio <= 1.0) recordsPoints = 0;
-      else if (ratio <= 1.5) recordsPoints = 15;
-      else if (ratio <= 2.5) recordsPoints = 30;
-      else recordsPoints = 45;
-
-      let loginPoints = 0;
-      if (loginHour >= 8 && loginHour <= 18) loginPoints = 0;
-      else if ((loginHour > 18 && loginHour <= 22) || (loginHour >= 6 && loginHour < 8)) loginPoints = 15;
-      else loginPoints = 30;
-
-      let exportPoints = 0;
-      if (dataExported <= 10.0) exportPoints = 0;
-      else if (dataExported <= 50.0) exportPoints = 15;
-      else exportPoints = 25;
-
-      const riskScore = Math.min(100, recordsPoints + loginPoints + exportPoints);
-      
-      let riskLevel = "LOW";
-      let action = "NO_ACTION";
-      if (riskScore > 35 && riskScore <= 70) {
-        riskLevel = "MEDIUM";
-        action = "MONITOR";
-      } else if (riskScore > 70) {
-        riskLevel = "HIGH";
-        action = "TEMPORARY_SUSPEND";
-      }
-
-      const ratioStr = ratio % 1 !== 0 ? ratio.toFixed(1) : Math.floor(ratio).toString();
-      const hourStr = loginHour === 0 ? "12AM" : loginHour === 12 ? "12PM" : loginHour < 12 ? `${loginHour}AM` : `${loginHour-12}PM`;
-      const exportStr = dataExported % 1 !== 0 ? dataExported.toFixed(1) : Math.floor(dataExported).toString();
-
-      let narrative = `Employee accessed ${ratioStr}x normal records at ${hourStr}`;
-      if (exportPoints > 0) {
-        narrative += ` and exported ${exportStr}MB data`;
-      }
-      if (riskLevel === "HIGH") {
-        narrative += " — possible exfiltration";
-      } else if (riskLevel === "MEDIUM") {
-        narrative += " — suspicious activity";
-      }
-
-      setAnalysisResult({
-        emp_id: selectedEmp.emp_id,
-        risk_score: riskScore,
-        risk_level: riskLevel,
-        recommended_action: action,
-        narrative: narrative
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Helper colors
-  const getSeverityColor = (level) => {
-    if (level === 'LOW') return 'var(--clear)';
-    if (level === 'MEDIUM') return 'var(--amber)';
-    return 'var(--red-threat)';
-  };
-
-  const getActionBadgeClass = (action) => {
-    if (action === 'NO_ACTION') return 'badge-clear';
-    if (action === 'MONITOR') return 'badge-step';
-    return 'badge-block';
+  const handleAction = (empId, action) => {
+    setEmpStatuses(prev => ({ ...prev, [empId]: action }));
   };
 
   return (
-    <div style={{
-      height: '100vh',
-      display: 'flex',
-      flexDirection: 'column',
-      backgroundColor: 'var(--bg-void)',
-      overflow: 'hidden'
-    }}>
-      {/* HEADER */}
-      <header style={{
-        height: '52px',
-        borderBottom: '1px solid var(--border)',
-        backgroundColor: 'var(--bg-surface)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: '0 20px',
-        flexShrink: 0
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <Link to="/" style={{ color: 'var(--text-dim)', textDecoration: 'none', display: 'flex', alignItems: 'center' }}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="square" strokeLinejoin="miter">
-              <line x1="19" y1="12" x2="5" y2="12" />
-              <polyline points="12 19 5 12 12 5" />
-            </svg>
-          </Link>
-          <span className="display" style={{ fontSize: '18px', fontWeight: '700', color: 'var(--text-primary)' }}>
-            INSIDER THREAT MONITOR
-          </span>
-        </div>
-        <div className="mono" style={{ fontSize: '11px', color: 'var(--text-dim)' }}>
-          WORKSPACE SECURITY PROTOCOL / PRIVILEGED ACCESS ONLY
-        </div>
-      </header>
+    <>
+      {/* Keyframes */}
+      <style>{`
+        @keyframes slide-in-right {
+          from { transform: translateX(100%); opacity: 0; }
+          to   { transform: translateX(0);    opacity: 1; }
+        }
+        @keyframes blink-cursor-im {
+          0%, 100% { opacity: 1; }
+          50%       { opacity: 0; }
+        }
+        .emp-card {
+          transition: border-color 0.15s, background-color 0.15s;
+          cursor: pointer;
+        }
+        .emp-card:hover { border-color: var(--amber) !important; background-color: #12151E !important; }
+        .action-btn { transition: background-color 0.15s, color 0.15s; cursor: pointer; }
+      `}</style>
 
-      {/* MAIN CONTAINER */}
       <div style={{
-        flex: 1,
         display: 'flex',
-        gap: '20px',
-        padding: '20px',
-        minHeight: 0
+        height: '100vh',
+        backgroundColor: 'var(--bg-void)',
+        overflow: 'hidden',
+        position: 'relative'
       }}>
-        {/* LEFT COLUMN: EMPLOYEE DIRECTORY */}
+
+        {/* ── MAIN CONTENT ─────────────────────────────────────── */}
         <div style={{
-          width: '50%',
+          flex: 1,
           display: 'flex',
           flexDirection: 'column',
-          minHeight: 0
+          overflow: 'hidden',
+          minWidth: 0
         }}>
-          <h3 className="mono" style={{
-            fontSize: '12px',
-            color: 'var(--amber)',
-            fontWeight: 'bold',
-            letterSpacing: '0.1em',
-            margin: '0 0 10px 0',
+
+          {/* CRITICAL ALERT BANNER */}
+          {criticalEmployees.length > 0 && (
+            <div style={{
+              backgroundColor: 'rgba(255,45,45,0.08)',
+              borderBottom: '1px solid rgba(255,45,45,0.4)',
+              padding: '10px 24px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
+              flexShrink: 0
+            }}>
+              <span style={{
+                width: '8px', height: '8px',
+                backgroundColor: 'var(--red-threat)',
+                borderRadius: '50%',
+                display: 'inline-block',
+                animation: 'pulse-amber 1.1s infinite ease-in-out'
+              }} />
+              <span className="mono" style={{ fontSize: '12px', color: 'var(--amber)', fontWeight: 'bold' }}>
+                ⚠ CRITICAL: {criticalEmployees.length} employee{criticalEmployees.length > 1 ? 's' : ''} flagged for immediate review
+                &nbsp;—&nbsp;
+                {criticalEmployees.map(e => e.id).join(', ')}
+              </span>
+            </div>
+          )}
+
+          {/* PAGE HEADER */}
+          <div style={{
+            padding: '20px 24px 16px',
+            borderBottom: '1px solid var(--border)',
+            display: 'flex',
+            alignItems: 'flex-start',
+            justifyContent: 'space-between',
             flexShrink: 0
           }}>
-            EMPLOYEE ACCESS DIRECTORY
-          </h3>
+            <div>
+              <h1 className="display" style={{
+                fontSize: '22px', fontWeight: '700',
+                color: 'var(--amber)', margin: '0 0 6px 0'
+              }}>
+                INSIDER THREAT MONITOR
+              </h1>
+              <p style={{
+                fontFamily: 'Inter, sans-serif',
+                fontSize: '12px', color: 'var(--text-dim)', margin: 0
+              }}>
+                Bank employee behavioral analysis — real-time anomaly detection
+              </p>
+            </div>
 
+            <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+              <span className="mono" style={{
+                fontSize: '11px', fontWeight: 'bold',
+                color: 'var(--amber)',
+                border: '1px solid var(--border-amber)',
+                padding: '5px 12px',
+                backgroundColor: 'var(--amber-dim)'
+              }}>
+                {EMPLOYEES.length} EMPLOYEES MONITORED
+              </span>
+              <span className="mono" style={{
+                fontSize: '11px', fontWeight: 'bold',
+                color: 'var(--red-threat)',
+                border: '1px solid rgba(255,45,45,0.4)',
+                padding: '5px 12px',
+                backgroundColor: 'var(--red-dim)'
+              }}>
+                {criticalEmployees.length} CRITICAL
+              </span>
+            </div>
+          </div>
+
+          {/* EMPLOYEE GRID */}
           <div style={{
             flex: 1,
             overflowY: 'auto',
-            border: '1px solid var(--border)',
-            backgroundColor: 'var(--bg-surface)'
+            padding: '20px 24px'
           }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-              <thead style={{
-                position: 'sticky',
-                top: 0,
-                backgroundColor: 'var(--bg-elevated)',
-                borderBottom: '1px solid var(--border)',
-                zIndex: 10
-              }}>
-                <tr>
-                  <th className="mono" style={{ padding: '12px', fontSize: '11px', color: 'var(--text-dim)', fontWeight: 'bold' }}>EMP_ID</th>
-                  <th className="mono" style={{ padding: '12px', fontSize: '11px', color: 'var(--text-dim)', fontWeight: 'bold' }}>NAME</th>
-                  <th className="mono" style={{ padding: '12px', fontSize: '11px', color: 'var(--text-dim)', fontWeight: 'bold' }}>DEPT</th>
-                  <th className="mono" style={{ padding: '12px', fontSize: '11px', color: 'var(--text-dim)', fontWeight: 'bold', textAlign: 'center' }}>BASE ACCESS/DAY</th>
-                  <th className="mono" style={{ padding: '12px', fontSize: '11px', color: 'var(--text-dim)', fontWeight: 'bold', textAlign: 'right' }}>ACCESS LEVEL</th>
-                </tr>
-              </thead>
-              <tbody>
-                {employees.map((emp) => (
-                  <tr
-                    key={emp.emp_id}
-                    onClick={() => handleSelectEmployee(emp)}
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(2, 1fr)',
+              gap: '14px'
+            }}>
+              {EMPLOYEES.map((emp) => {
+                const isSelected   = selected?.id === emp.id;
+                const status       = empStatuses[emp.id];
+                const badOutsideHrs = isOutsideHours(emp);
+                const badRecords   = isHighRecords(emp);
+                const badExport    = isHighExport(emp);
+
+                return (
+                  <div
+                    key={emp.id}
+                    className="emp-card"
+                    onClick={() => setSelected(isSelected ? null : emp)}
                     style={{
-                      backgroundColor: selectedEmp.emp_id === emp.emp_id ? 'var(--amber-dim)' : 'transparent',
-                      borderBottom: '1px solid var(--border)',
-                      cursor: 'pointer',
-                      borderLeft: selectedEmp.emp_id === emp.emp_id ? '3px solid var(--amber)' : '3px solid transparent',
-                      transition: 'background-color 0.15s'
+                      backgroundColor: isSelected ? '#12151E' : '#0F1117',
+                      border: `1px solid ${isSelected ? 'var(--amber)' : 'var(--border)'}`,
+                      borderRadius: 0,
+                      padding: '16px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '10px',
+                      position: 'relative'
                     }}
-                    onMouseOver={(e) => { if (selectedEmp.emp_id !== emp.emp_id) e.currentTarget.style.backgroundColor = '#0D0F14'; }}
-                    onMouseOut={(e) => { if (selectedEmp.emp_id !== emp.emp_id) e.currentTarget.style.backgroundColor = 'transparent'; }}
                   >
-                    <td className="mono" style={{ padding: '12px', fontSize: '12px', color: 'var(--text-primary)', fontWeight: 'bold' }}>
-                      {emp.emp_id}
-                    </td>
-                    <td className="mono" style={{ padding: '12px', fontSize: '12px', color: 'var(--text-primary)' }}>
-                      {emp.name}
-                    </td>
-                    <td className="mono" style={{ padding: '12px', fontSize: '12px', color: 'var(--text-mono)' }}>
-                      {emp.department}
-                    </td>
-                    <td className="mono" style={{ padding: '12px', fontSize: '12px', color: 'var(--text-mono)', textAlign: 'center' }}>
-                      {emp.normal_records_per_day} records
-                    </td>
-                    <td className="mono" style={{ padding: '12px', fontSize: '12px', color: 'var(--amber)', fontWeight: 'bold', textAlign: 'right' }}>
-                      {emp.access_level}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
+                    {/* Status ribbon */}
+                    {status !== 'ACTIVE' && (
+                      <div style={{
+                        position: 'absolute', top: 0, right: 0,
+                        padding: '3px 10px',
+                        backgroundColor:
+                          status === 'SUSPENDED' ? 'var(--red-dim)' :
+                          status === 'FLAGGED'   ? 'var(--amber-dim)' : 'var(--clear-dim)',
+                        borderLeft: `2px solid ${
+                          status === 'SUSPENDED' ? 'var(--red-threat)' :
+                          status === 'FLAGGED'   ? 'var(--amber)' : 'var(--clear)'
+                        }`
+                      }}>
+                        <span className="mono" style={{
+                          fontSize: '9px', fontWeight: 'bold',
+                          color:
+                            status === 'SUSPENDED' ? 'var(--red-threat)' :
+                            status === 'FLAGGED'   ? 'var(--amber)' : 'var(--clear)'
+                        }}>
+                          {status}
+                        </span>
+                      </div>
+                    )}
 
-        {/* RIGHT COLUMN: SIMULATION & ENGINE */}
-        <div style={{
-          width: '50%',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '20px',
-          minHeight: 0
-        }}>
-          {/* SANDBOX CONTROLS */}
-          <div style={{
-            backgroundColor: 'var(--bg-surface)',
-            border: '1px solid var(--border)',
-            padding: '20px',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '16px'
-          }}>
-            <h3 className="mono" style={{
-              fontSize: '12px',
-              color: 'var(--amber)',
-              fontWeight: 'bold',
-              letterSpacing: '0.1em',
-              margin: '0 0 10px 0',
-              borderBottom: '1px solid var(--border)',
-              paddingBottom: '8px'
-            }}>
-              RISK SIMULATION SANDBOX ({selectedEmp.emp_id} - {selectedEmp.name})
-            </h3>
+                    {/* Top row: EMP ID + dept badge */}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <span className="mono" style={{
+                        fontSize: '12px', fontWeight: 'bold', color: 'var(--amber)'
+                      }}>
+                        {emp.id}
+                      </span>
+                      <span className="mono" style={{
+                        fontSize: '10px', color: getDeptColor(emp.department),
+                        border: `1px solid ${getDeptColor(emp.department)}33`,
+                        padding: '2px 8px'
+                      }}>
+                        {emp.department.toUpperCase()}
+                      </span>
+                    </div>
 
-            {/* Parameter 1: Records Accessed */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span className="mono" style={{ fontSize: '11px', color: 'var(--text-mono)' }}>RECORDS ACCESSED TODAY</span>
-                <span className="mono" style={{ fontSize: '12px', color: 'var(--amber)', fontWeight: 'bold' }}>
-                  {recordsAccessed} ({(recordsAccessed / selectedEmp.normal_records_per_day).toFixed(1)}x baseline)
-                </span>
-              </div>
-              <input
-                type="range"
-                min="0"
-                max={selectedEmp.normal_records_per_day * 4}
-                value={recordsAccessed}
-                onChange={(e) => setRecordsAccessed(parseInt(e.target.value))}
-                style={{
-                  width: '100%',
-                  accentColor: 'var(--amber)',
-                  background: 'var(--bg-void)',
-                  height: '4px',
-                  borderRadius: 0,
-                  cursor: 'pointer'
-                }}
-              />
-            </div>
+                    {/* Name + Level Badge */}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <span className="display" style={{ fontSize: '14px', color: 'var(--text-primary)', fontWeight: '600' }}>
+                        {emp.name}
+                      </span>
+                      <span className="badge" style={{
+                        fontSize: '9px',
+                        backgroundColor: getRiskBg(emp.level),
+                        color: getRiskColor(emp.level),
+                        border: `1px solid ${getRiskBorder(emp.level)}`
+                      }}>
+                        {emp.level}
+                      </span>
+                    </div>
 
-            {/* Parameter 2: Hour of Access */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span className="mono" style={{ fontSize: '11px', color: 'var(--text-mono)' }}>LOGIN HOUR OF ACCESS</span>
-                <span className="mono" style={{ fontSize: '12px', color: 'var(--amber)', fontWeight: 'bold' }}>
-                  {loginHour === 0 ? "12 AM" : loginHour === 12 ? "12 PM" : loginHour < 12 ? `${loginHour} AM` : `${loginHour-12} PM`} (Hour: {loginHour})
-                </span>
-              </div>
-              <input
-                type="range"
-                min="0"
-                max="23"
-                value={loginHour}
-                onChange={(e) => setLoginHour(parseInt(e.target.value))}
-                style={{
-                  width: '100%',
-                  accentColor: 'var(--amber)',
-                  background: 'var(--bg-void)',
-                  height: '4px',
-                  borderRadius: 0,
-                  cursor: 'pointer'
-                }}
-              />
-            </div>
+                    {/* Risk bar */}
+                    <div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                        <span className="mono" style={{ fontSize: '10px', color: 'var(--text-dim)' }}>RISK SCORE</span>
+                        <span className="mono" style={{
+                          fontSize: '11px', fontWeight: 'bold',
+                          color: getRiskColor(emp.level)
+                        }}>
+                          {emp.risk}/100
+                        </span>
+                      </div>
+                      <div style={{
+                        width: '100%', height: '6px',
+                        backgroundColor: 'var(--bg-void)',
+                        border: '1px solid var(--border)'
+                      }}>
+                        <div style={{
+                          width: `${emp.risk}%`, height: '100%',
+                          backgroundColor: getRiskColor(emp.level),
+                          transition: 'width 0.8s ease'
+                        }} />
+                      </div>
+                    </div>
 
-            {/* Parameter 3: Data Exported */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span className="mono" style={{ fontSize: '11px', color: 'var(--text-mono)' }}>DATA EXPORTED (MB)</span>
-                <span className="mono" style={{ fontSize: '12px', color: 'var(--amber)', fontWeight: 'bold' }}>
-                  {dataExported} MB
-                </span>
-              </div>
-              <input
-                type="range"
-                min="0"
-                max="100"
-                step="0.5"
-                value={dataExported}
-                onChange={(e) => setDataExported(parseFloat(e.target.value))}
-                style={{
-                  width: '100%',
-                  accentColor: 'var(--amber)',
-                  background: 'var(--bg-void)',
-                  height: '4px',
-                  borderRadius: 0,
-                  cursor: 'pointer'
-                }}
-              />
-            </div>
-
-            {/* Run Button */}
-            <button
-              onClick={handleRunAnalysis}
-              disabled={loading}
-              className="mono"
-              style={{
-                width: '100%',
-                height: '40px',
-                backgroundColor: 'var(--amber)',
-                border: '1px solid var(--amber)',
-                color: 'var(--bg-void)',
-                fontSize: '12px',
-                fontWeight: 'bold',
-                cursor: 'pointer',
-                letterSpacing: '0.05em',
-                transition: 'background-color 0.2s',
-                borderRadius: 0,
-                marginTop: '10px'
-              }}
-              onMouseOver={(e) => { e.currentTarget.style.backgroundColor = 'var(--amber-light)'; }}
-              onMouseOut={(e) => { e.currentTarget.style.backgroundColor = 'var(--amber)'; }}
-            >
-              {loading ? "PROCESSING ANOMALY CHECK..." : "RUN SECURITY ANALYSIS ENGINE"}
-            </button>
-          </div>
-
-          {/* ENGINE RESULTS */}
-          <div style={{
-            flex: 1,
-            backgroundColor: 'var(--bg-surface)',
-            border: '1px solid var(--border)',
-            padding: '20px',
-            display: 'flex',
-            flexDirection: 'column',
-            minHeight: 0
-          }}>
-            <h3 className="mono" style={{
-              fontSize: '12px',
-              color: 'var(--amber)',
-              fontWeight: 'bold',
-              letterSpacing: '0.1em',
-              margin: '0 0 16px 0',
-              borderBottom: '1px solid var(--border)',
-              paddingBottom: '8px',
-              flexShrink: 0
-            }}>
-              SECURITY TELEMETRY RESPONSE
-            </h3>
-
-            {analysisResult ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', overflowY: 'auto', flex: 1 }}>
-                
-                {/* Score and level */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
-                  {/* Circular visual score */}
-                  <div style={{
-                    width: '72px',
-                    height: '72px',
-                    border: `3px solid ${getSeverityColor(analysisResult.risk_level)}`,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                  }}>
-                    <span className="mono" style={{ fontSize: '20px', fontWeight: 'bold', color: 'var(--text-primary)' }}>
-                      {analysisResult.risk_score}
-                    </span>
-                    <span className="mono" style={{ fontSize: '8px', color: 'var(--text-dim)' }}>RISK</span>
-                  </div>
-
-                  <div>
-                    <div className="mono" style={{ fontSize: '10px', color: 'var(--text-dim)' }}>DETECTED THREAT LEVEL</div>
-                    <div className="mono" style={{ fontSize: '18px', fontWeight: 'bold', color: getSeverityColor(analysisResult.risk_level), marginTop: '4px' }}>
-                      {analysisResult.risk_level} LEVEL
+                    {/* Stats row */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <div className="mono" style={{ fontSize: '11px', color: badRecords ? 'var(--red-threat)' : 'var(--text-dim)' }}>
+                        Records today:&nbsp;
+                        <span style={{ fontWeight: 'bold' }}>{emp.records}</span>
+                        <span style={{ color: 'var(--text-dim)' }}> (normal: {emp.normalRecords})</span>
+                      </div>
+                      <div className="mono" style={{ fontSize: '11px', color: badOutsideHrs ? 'var(--red-threat)' : 'var(--text-dim)' }}>
+                        Last login:&nbsp;
+                        <span style={{ fontWeight: 'bold' }}>{emp.loginTime}</span>
+                      </div>
+                      <div className="mono" style={{ fontSize: '11px', color: badExport ? 'var(--red-threat)' : 'var(--text-dim)' }}>
+                        Data exported:&nbsp;
+                        <span style={{ fontWeight: 'bold' }}>{emp.dataExported} MB</span>
+                      </div>
                     </div>
                   </div>
-                </div>
-
-                {/* Narrative */}
-                <div>
-                  <div className="mono" style={{ fontSize: '11px', color: 'var(--text-mono)' }}>TELEMETRY SUMMARY</div>
-                  <div className="mono" style={{
-                    fontSize: '13px',
-                    color: 'var(--text-primary)',
-                    backgroundColor: 'var(--bg-void)',
-                    borderLeft: `3px solid ${getSeverityColor(analysisResult.risk_level)}`,
-                    padding: '12px',
-                    marginTop: '8px',
-                    lineHeight: '1.4'
-                  }}>
-                    {analysisResult.narrative}
-                  </div>
-                </div>
-
-                {/* Recommended action */}
-                <div>
-                  <div className="mono" style={{ fontSize: '11px', color: 'var(--text-mono)', marginBottom: '8px' }}>MITIGATION ACTION</div>
-                  <span className={`badge ${getActionBadgeClass(analysisResult.recommended_action)}`}>
-                    {analysisResult.recommended_action.replace('_', ' ')}
-                  </span>
-                </div>
-
-              </div>
-            ) : (
-              <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', textAlign: 'center', color: 'var(--text-dim)' }}>
-                <span className="mono" style={{ fontSize: '12px' }}>
-                  AWAITING SANDBOX EVENT TELEMETRY.<br />SELECT EMPLOYEE, ADJUST METRICS, AND RUN ANALYSIS.
-                </span>
-              </div>
-            )}
+                );
+              })}
+            </div>
           </div>
         </div>
+
+        {/* ── DETAIL PANEL (slide in from right) ───────────────── */}
+        {selected && (
+          <div style={{
+            width: '380px',
+            height: '100%',
+            backgroundColor: '#0F1117',
+            borderLeft: '1px solid var(--amber)',
+            display: 'flex',
+            flexDirection: 'column',
+            flexShrink: 0,
+            animation: 'slide-in-right 0.22s ease-out',
+            overflowY: 'auto'
+          }}>
+            {/* Panel header */}
+            <div style={{
+              padding: '14px 16px',
+              borderBottom: '1px solid var(--border)',
+              backgroundColor: 'rgba(255,140,0,0.06)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              flexShrink: 0
+            }}>
+              <div>
+                <span className="mono" style={{ fontSize: '12px', color: 'var(--amber)', fontWeight: 'bold' }}>
+                  {selected.id}
+                </span>
+                <span className="mono" style={{ fontSize: '11px', color: 'var(--text-dim)', marginLeft: '10px' }}>
+                  {selected.department}
+                </span>
+              </div>
+              <button
+                onClick={() => setSelected(null)}
+                style={{
+                  background: 'transparent', border: '1px solid var(--border)',
+                  color: 'var(--text-dim)', width: '28px', height: '28px',
+                  cursor: 'pointer', fontSize: '14px', borderRadius: 0
+                }}
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Panel body */}
+            <div style={{ flex: 1, padding: '16px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              {/* Name & Risk */}
+              <div>
+                <div className="display" style={{
+                  fontSize: '18px', fontWeight: '700',
+                  color: 'var(--text-primary)', marginBottom: '6px'
+                }}>
+                  {selected.name}
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <span className="mono" style={{
+                    fontSize: '24px', fontWeight: 'bold',
+                    color: getRiskColor(selected.level)
+                  }}>
+                    {selected.risk}
+                  </span>
+                  <span className="mono" style={{ fontSize: '12px', color: 'var(--text-dim)' }}>/ 100</span>
+                  <span className="badge" style={{
+                    fontSize: '10px',
+                    backgroundColor: getRiskBg(selected.level),
+                    color: getRiskColor(selected.level),
+                    border: `1px solid ${getRiskBorder(selected.level)}`
+                  }}>
+                    {selected.level}
+                  </span>
+                </div>
+              </div>
+
+              {/* Full stats */}
+              <div style={{
+                backgroundColor: 'var(--bg-void)',
+                border: '1px solid var(--border)',
+                padding: '12px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '8px'
+              }}>
+                {[
+                  { label: 'Records Accessed', value: `${selected.records}`, normal: `baseline: ${selected.normalRecords}`, bad: isHighRecords(selected) },
+                  { label: 'Login Time', value: selected.loginTime, normal: `approved: ${selected.normalHours.start}AM–${selected.normalHours.end >= 12 ? selected.normalHours.end - 12 + 'PM' : selected.normalHours.end + 'AM'}`, bad: isOutsideHours(selected) },
+                  { label: 'Data Exported', value: `${selected.dataExported} MB`, normal: 'threshold: 10 MB', bad: isHighExport(selected) },
+                ].map(({ label, value, normal, bad }) => (
+                  <div key={label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                    <span className="mono" style={{ fontSize: '10px', color: 'var(--text-dim)' }}>{label}</span>
+                    <div style={{ textAlign: 'right' }}>
+                      <span className="mono" style={{ fontSize: '12px', fontWeight: 'bold', color: bad ? 'var(--red-threat)' : 'var(--text-primary)' }}>
+                        {value}
+                      </span>
+                      <br />
+                      <span className="mono" style={{ fontSize: '9px', color: 'var(--text-dim)' }}>{normal}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Gemini Analysis terminal */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span className="mono" style={{ fontSize: '10px', color: 'var(--amber)', fontWeight: 'bold', letterSpacing: '0.06em' }}>
+                    AI THREAT ASSESSMENT
+                  </span>
+                  <span className="badge" style={{
+                    fontSize: '8px', padding: '2px 6px',
+                    backgroundColor: 'rgba(255,140,0,0.15)',
+                    color: 'var(--amber)',
+                    border: '1px solid var(--border-amber)'
+                  }}>
+                    GEMINI 2.5 FLASH
+                  </span>
+                </div>
+                <div style={{
+                  backgroundColor: '#050709',
+                  border: '1px solid rgba(255,140,0,0.3)',
+                  padding: '12px'
+                }}>
+                  <pre className="mono" style={{
+                    margin: 0, fontSize: '11px',
+                    color: 'var(--amber)', lineHeight: '1.8',
+                    whiteSpace: 'pre-wrap',
+                    fontFamily: 'JetBrains Mono, monospace'
+                  }}>
+                    {selected.analysis}
+                    <span style={{ animation: 'blink-cursor-im 0.8s step-start infinite', color: 'var(--amber)' }}>█</span>
+                  </pre>
+                  <div className="mono" style={{
+                    fontSize: '9px', color: 'var(--text-dim)',
+                    borderTop: '1px solid var(--border)',
+                    paddingTop: '6px', marginTop: '8px'
+                  }}>
+                    — Generated by Gemini 2.5 Flash | Confidence: 0.91 | Model: contextguard-insider-v1
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: 'auto' }}>
+                <div className="mono" style={{ fontSize: '10px', color: 'var(--amber)', fontWeight: 'bold', letterSpacing: '0.06em', marginBottom: '2px' }}>
+                  MANAGER ACTIONS
+                </div>
+
+                <button
+                  className="action-btn mono"
+                  onClick={() => handleAction(selected.id, 'CLEARED')}
+                  style={{
+                    width: '100%', height: '38px', borderRadius: 0,
+                    backgroundColor: 'transparent',
+                    border: '1px solid var(--clear)',
+                    color: 'var(--clear)',
+                    fontSize: '11px', fontWeight: 'bold', letterSpacing: '0.04em'
+                  }}
+                  onMouseOver={e => e.currentTarget.style.backgroundColor = 'var(--clear-dim)'}
+                  onMouseOut={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                >
+                  CLEAR — NO THREAT DETECTED
+                </button>
+
+                <button
+                  className="action-btn mono"
+                  onClick={() => handleAction(selected.id, 'FLAGGED')}
+                  style={{
+                    width: '100%', height: '38px', borderRadius: 0,
+                    backgroundColor: 'transparent',
+                    border: '1px solid var(--amber)',
+                    color: 'var(--amber)',
+                    fontSize: '11px', fontWeight: 'bold', letterSpacing: '0.04em'
+                  }}
+                  onMouseOver={e => e.currentTarget.style.backgroundColor = 'var(--amber-dim)'}
+                  onMouseOut={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                >
+                  FLAG FOR REVIEW
+                </button>
+
+                <button
+                  className="action-btn mono"
+                  onClick={() => handleAction(selected.id, 'SUSPENDED')}
+                  style={{
+                    width: '100%', height: '38px', borderRadius: 0,
+                    backgroundColor: 'var(--red-threat)',
+                    border: '1px solid var(--red-threat)',
+                    color: '#FFFFFF',
+                    fontSize: '11px', fontWeight: 'bold', letterSpacing: '0.04em'
+                  }}
+                  onMouseOver={e => e.currentTarget.style.backgroundColor = '#C81E1E'}
+                  onMouseOut={e => e.currentTarget.style.backgroundColor = 'var(--red-threat)'}
+                >
+                  SUSPEND IMMEDIATELY
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
-    </div>
+    </>
   );
 }

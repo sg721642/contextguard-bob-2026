@@ -787,7 +787,7 @@ export default function Dashboard() {
           ContextGuard v1.0 — Bank of Baroda PSB Hackathon 2026 — Cybersecurity & Fraud Domain
         </span>
         <span className="mono" style={{ fontSize: '10px', color: 'var(--text-dim)' }}>
-          © 2026 Team Antigravity
+          © 2026 Team Sentinel
         </span>
       </footer>
 
@@ -795,8 +795,17 @@ export default function Dashboard() {
       <AlertModal
         isOpen={!!modalEvent}
         onClose={() => setModalEvent(null)}
-        onDecision={({ action, reason, eventId }) => {
+        onDecision={async ({ action, reason, eventId }) => {
           console.log(`Decision: ${action} | Reason: ${reason} | Event: ${eventId}`);
+          try {
+            await fetch(`${API_BASE}/event/${eventId}/decision`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ action, reason })
+            });
+          } catch (err) {
+            console.error("Error logging decision to audit trail:", err);
+          }
           setModalEvent(null);
         }}
         eventData={modalEvent}

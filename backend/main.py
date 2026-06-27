@@ -53,6 +53,17 @@ def run_seeder_if_empty():
         try:
             conn = sqlite3.connect(DB_PATH)
             cursor = conn.cursor()
+            # Ensure audit_trail table exists
+            cursor.execute("""
+            CREATE TABLE IF NOT EXISTS audit_trail (
+                event_id TEXT PRIMARY KEY,
+                action TEXT NOT NULL,
+                reason TEXT NOT NULL,
+                timestamp TEXT NOT NULL
+            )
+            """)
+            conn.commit()
+            
             # Check if table exists and has records
             cursor.execute("SELECT count(name) FROM sqlite_master WHERE type='table' AND name='risk_events'")
             if cursor.fetchone()[0] == 0:
@@ -139,6 +150,14 @@ class UserHistoryEvent(BaseModel):
     decision: str
     top_signal: str
     is_confirmed_fraud: bool
+
+class DecisionRequest(BaseModel):
+    action: str
+    reason: str
+
+class DecisionResponse(BaseModel):
+    event_id: str
+    status: str
 
 class Employee(BaseModel):
     emp_id: str
@@ -440,6 +459,39 @@ def get_event_details(event_id: str):
         top_signal=r[16],
         is_confirmed_fraud=bool(r[17])
     )
+
+@app.post("/api/v1/event/{event_id}/decision", response_model=DecisionResponse)
+def log_manager_decision(event_id: str, payload: DecisionRequest):
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        
+        cursor.execute("SELECT 1 FROM risk_events WHERE event_id = ?", (event_id,))
+        if not cursor.fetchone():
+            conn.close()
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Event {event_id} not found."
+            )
+            
+        now_str = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        
+        cursor.execute("""
+            INSERT OR REPLACE INTO audit_trail (event_id, action, reason, timestamp)
+            VALUES (?, ?, ?, ?)
+        """, (event_id, payload.action, payload.reason, now_str))
+        
+        conn.commit()
+        conn.close()
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Database write error: {e}"
+        )
+        
+    return DecisionResponse(event_id=event_id, status="success")
 
 @app.get("/api/v1/user/{user_id}/history", response_model=List[UserHistoryEvent])
 def user_history(user_id: str):

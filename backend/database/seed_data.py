@@ -28,6 +28,7 @@ def init_db():
     cursor.execute("DROP TABLE IF EXISTS risk_events")
     cursor.execute("DROP TABLE IF EXISTS user_profiles")
     cursor.execute("DROP TABLE IF EXISTS employees")
+    cursor.execute("DROP TABLE IF EXISTS audit_trail")
     
     # Create tables
     cursor.execute("""
@@ -72,6 +73,15 @@ def init_db():
         department TEXT NOT NULL,
         normal_records_per_day INTEGER NOT NULL,
         access_level TEXT NOT NULL
+    )
+    """)
+
+    cursor.execute("""
+    CREATE TABLE audit_trail (
+        event_id TEXT PRIMARY KEY,
+        action TEXT NOT NULL,
+        reason TEXT NOT NULL,
+        timestamp TEXT NOT NULL
     )
     """)
     

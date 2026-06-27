@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import AlertModal from '../components/AlertModal';
 
-const API_BASE = 'http://localhost:8000/api/v1';
+const API_BASE = 'https://contextguard-backend.onrender.com/api/v1';
 
 const CITIES = ["Mumbai", "Delhi", "Chennai", "Bangalore", "Jaipur", "Kolkata", "Hyderabad", "Pune"];
 const SIGNALS = [

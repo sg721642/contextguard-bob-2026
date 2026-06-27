@@ -170,7 +170,7 @@ const isOutsideHours   = (emp) => emp.loginHour < emp.normalHours.start || emp.l
 const isHighRecords    = (emp) => emp.records > emp.normalRecords * 2;
 const isHighExport     = (emp) => emp.dataExported > 10;
 
-const API_BASE = 'http://localhost:8000/api/v1';
+const API_BASE = 'https://contextguard-backend.onrender.com/api/v1';
 
 export default function InsiderMonitor() {
   const [employees, setEmployees] = useState(EMPLOYEES);

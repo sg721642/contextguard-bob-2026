@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import {
   ResponsiveContainer,
@@ -10,6 +10,8 @@ import {
   Tooltip as ChartTooltip,
   ReferenceLine
 } from 'recharts';
+
+const API_BASE = 'https://contextguard-backend.onrender.com/api/v1';
 
 // 30 days of data telling a story: mostly green/amber (0-55) with 2-3 recent red spikes (85-98)
 const dnaData = [
@@ -71,6 +73,79 @@ export default function UserProfile({ userId }) {
   // State to simulate UI reactions
   const [trustLevel, setTrustLevel] = useState("FLAGGED");
   const [logs, setLogs] = useState(initialEventLogs);
+  const [dynamicDna, setDynamicDna] = useState(dnaData);
+  const [confidence, setConfidence] = useState(0.87);
+  const [sourceModel, setSourceModel] = useState("Gemini 2.5 Flash");
+
+  const staticNarrative = `ANALYSIS TIMESTAMP: 2026-06-27 02:34:17 IST
+SUBJECT: ${currentUserId} | RISK LEVEL: ELEVATED
+
+Behavioral pattern deviation detected over last 72 hours. User accessed account
+from Jaipur (847km from registered city Mumbai) using an unrecognized device at
+02:34 AM — outside normal activity window of 09:00-19:00. Keystroke biometric
+similarity score dropped to 41% against stored baseline. Combined with a ₹85,000
+IMPS transfer (8.5x average transaction size), this pattern is consistent with
+account takeover post-credential compromise.`;
+
+  const [analysisText, setAnalysisText] = useState(staticNarrative);
+
+  useEffect(() => {
+    const loadUserData = async () => {
+      try {
+        // Fetch user history
+        const historyRes = await fetch(`${API_BASE}/user/${currentUserId}/history`);
+        if (historyRes.ok) {
+          const historyData = await historyRes.json();
+          if (historyData.length > 0) {
+            // Map backend events to table logs
+            const mappedLogs = historyData.map(e => ({
+              date: e.timestamp.replace('T', ' '),
+              city: e.city || 'Unknown',
+              device: e.is_new_device ? 'New Device' : 'Trusted Device',
+              score: e.final_risk_score,
+              decision: e.decision,
+              action: e.decision === 'BLOCK' ? 'ACCOUNT_FROZEN' :
+                      e.decision === 'HUMAN_REVIEW' ? 'QUEUE_PENDING' :
+                      e.decision === 'STEP_UP' ? 'MFA_PROMPTED' : 'BYPASSED'
+            }));
+            setLogs(mappedLogs);
+
+            // Map recent scores for dnaData (chronological order)
+            const sortedHistory = [...historyData].reverse();
+            const mappedDna = sortedHistory.map(e => ({
+              date: e.timestamp.split('T')[0],
+              score: e.final_risk_score
+            }));
+            // pad with some static dates if length < 10 for visuals
+            if (mappedDna.length < 10) {
+              const padding = dnaData.slice(0, 10 - mappedDna.length);
+              setDynamicDna([...padding, ...mappedDna]);
+            } else {
+              setDynamicDna(mappedDna);
+            }
+
+            // Determine current trust level from latest event
+            const latest = historyData[0];
+            if (latest.final_risk_score >= 86) setTrustLevel("FLAGGED");
+            else if (latest.final_risk_score >= 61) setTrustLevel("MONITORED");
+            else setTrustLevel("TRUSTED");
+          }
+        }
+
+        // Fetch user narrative assessment
+        const analyzeRes = await fetch(`${API_BASE}/user/${currentUserId}/analyze`);
+        if (analyzeRes.ok) {
+          const analyzeData = await analyzeRes.json();
+          setAnalysisText(analyzeData.narrative);
+          setConfidence(analyzeData.confidence);
+          setSourceModel(analyzeData.source === 'gemini-2.0-flash' ? 'Gemini 2.5 Flash' : 'Rule-Based Engine');
+        }
+      } catch (err) {
+        console.error("Error fetching user data from backend:", err);
+      }
+    };
+    loadUserData();
+  }, [currentUserId]);
 
   // Masked User ID representation: e.g. "USR-****4721"
   const getMaskedId = (uid) => {
@@ -247,7 +322,7 @@ export default function UserProfile({ userId }) {
           30-DAY TRUST HISTORY
         </h4>
         <div style={{ display: 'flex', gap: '3px', flexWrap: 'wrap' }}>
-          {dnaData.map((item, idx) => (
+          {dynamicDna.map((item, idx) => (
             <div key={idx} className="dna-rect-wrapper">
               <div style={{
                 width: '18px',
@@ -284,7 +359,7 @@ export default function UserProfile({ userId }) {
           </h4>
           <div style={{ flex: 1, width: '100%', height: '240px' }}>
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={dnaData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <LineChart data={dynamicDna} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <CartesianGrid stroke="#1E2533" strokeDasharray="3 3" vertical={false} />
                 <XAxis 
                   dataKey="date" 
@@ -413,17 +488,7 @@ export default function UserProfile({ userId }) {
             whiteSpace: 'pre-wrap',
             fontFamily: 'JetBrains Mono, monospace'
           }}>
-{`ANALYSIS TIMESTAMP: 2026-06-27 02:34:17 IST
-SUBJECT: ${currentUserId} | RISK LEVEL: ELEVATED
-
-Behavioral pattern deviation detected over last 72 hours. User accessed account
-from Jaipur (847km from registered city Mumbai) using an unrecognized device at
-02:34 AM — outside normal activity window of 09:00-19:00. Keystroke biometric
-similarity score dropped to 41% against stored baseline. Combined with a ₹85,000
-IMPS transfer (8.5x average transaction size), this pattern is consistent with
-account takeover post-credential compromise.
-
-RECOMMENDATION: Freeze account, trigger video KYC, notify registered mobile.`}
+            {analysisText}
             <span className="blinking-cursor">█</span>
           </pre>
 
@@ -434,7 +499,7 @@ RECOMMENDATION: Freeze account, trigger video KYC, notify registered mobile.`}
             paddingTop: '8px',
             marginTop: '6px'
           }}>
-            — Generated by Gemini 2.5 Flash | Confidence: 0.87 | Model: contextguard-insider-v1
+            — Generated by {sourceModel} | Confidence: {confidence} | Model: contextguard-identity-v1
           </div>
         </div>
       </div>

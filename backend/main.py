@@ -4,6 +4,7 @@ import sqlite3
 import random
 import datetime
 import uuid
+import logging
 from typing import Optional, Dict, List
 from fastapi import FastAPI, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
@@ -13,6 +14,14 @@ from pydantic import BaseModel, Field
 BACKEND_DIR = os.path.dirname(os.path.abspath(__file__))
 if BACKEND_DIR not in sys.path:
     sys.path.append(BACKEND_DIR)
+
+# Load Gemini threat narrative module
+try:
+    from threat_narrative import generate_threat_narrative, generate_user_narrative
+    GEMINI_AVAILABLE = True
+except ImportError as e:
+    logging.warning(f"threat_narrative module not available: {e}")
+    GEMINI_AVAILABLE = False
 
 DB_PATH = os.path.join(BACKEND_DIR, 'database', 'contextguard.db')
 
@@ -138,6 +147,13 @@ class Employee(BaseModel):
     normal_records_per_day: int
     access_level: str
 
+class UserAnalyzeResponse(BaseModel):
+    user_id: str
+    risk_level: str
+    narrative: str
+    confidence: float
+    source: str
+
 class EmployeeAnalyzeRequest(BaseModel):
     emp_id: str
     records_accessed_today: int
@@ -150,6 +166,8 @@ class EmployeeAnalyzeResponse(BaseModel):
     risk_level: str
     narrative: str
     recommended_action: str
+    confidence: float
+    source: str
 
 # ----------------- API ROUTES -----------------
 
@@ -422,6 +440,86 @@ def user_history(user_id: str):
         ))
     return events
 
+@app.get("/api/v1/user/{user_id}/analyze", response_model=UserAnalyzeResponse)
+def analyze_user_profile(user_id: str):
+    # Fetch user profile baseline info from DB
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT normal_city, normal_login_hour_start, normal_login_hour_end,
+                   baseline_keystroke_ms, account_age_days, trust_level
+            FROM user_profiles
+            WHERE user_id = ?
+        """, (user_id,))
+        profile_row = cursor.fetchone()
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Database read error: {e}"
+        )
+
+    if not profile_row:
+        # Create a default profile if user not explicitly in user_profiles
+        user_profile = {
+            "user_id": user_id,
+            "normal_city": "Mumbai",
+            "normal_login_hour_start": 9,
+            "normal_login_hour_end": 19,
+            "baseline_keystroke_ms": 120.0,
+            "account_age_days": 150
+        }
+    else:
+        user_profile = {
+            "user_id": user_id,
+            "normal_city": profile_row[0],
+            "normal_login_hour_start": profile_row[1],
+            "normal_login_hour_end": profile_row[2],
+            "baseline_keystroke_ms": profile_row[3],
+            "account_age_days": profile_row[4]
+        }
+
+    # Fetch recent events for the user
+    try:
+        cursor.execute("""
+            SELECT timestamp, city, login_hour, is_new_device,
+                   keystroke_variance_ms, final_risk_score, decision
+            FROM risk_events
+            WHERE user_id = ?
+            ORDER BY timestamp DESC
+            LIMIT 5
+        """, (user_id,))
+        event_rows = cursor.fetchall()
+        conn.close()
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Database read error: {e}"
+        )
+
+    recent_events = []
+    for r in event_rows:
+        recent_events.append({
+            "timestamp": r[0],
+            "city": r[1],
+            "login_hour": r[2],
+            "is_new_device": bool(r[3]),
+            "keystroke_variance_ms": r[4],
+            "final_risk_score": r[5],
+            "decision": r[6]
+        })
+
+    # Call Gemini (or fallback)
+    result = generate_user_narrative(user_profile, recent_events)
+
+    return UserAnalyzeResponse(
+        user_id=user_id,
+        risk_level=result["risk_level"],
+        narrative=result["narrative"],
+        confidence=result.get("confidence", 0.8),
+        source=result.get("source", "unknown")
+    )
+
 @app.get("/api/v1/employees", response_model=List[Employee])
 def list_employees():
     try:
@@ -449,11 +547,14 @@ def list_employees():
 
 @app.post("/api/v1/employee/analyze", response_model=EmployeeAnalyzeResponse)
 def analyze_employee(payload: EmployeeAnalyzeRequest):
-    # Fetch employee to get baseline details
+    # Fetch employee baseline — need name, department, and normal_records_per_day
     try:
         conn = sqlite3.connect(DB_PATH)
         cursor = conn.cursor()
-        cursor.execute("SELECT normal_records_per_day FROM employees WHERE emp_id = ?", (payload.emp_id,))
+        cursor.execute(
+            "SELECT name, department, normal_records_per_day FROM employees WHERE emp_id = ?",
+            (payload.emp_id,)
+        )
         row = cursor.fetchone()
         conn.close()
     except Exception as e:
@@ -468,76 +569,28 @@ def analyze_employee(payload: EmployeeAnalyzeRequest):
             detail=f"Employee with ID {payload.emp_id} not found."
         )
 
-    normal_records = row[0]
+    emp_name, emp_dept, normal_records = row
 
-    # 1. Records Accessed Points
-    ratio = payload.records_accessed_today / normal_records
-    if ratio <= 1.0:
-        records_points = 0
-    elif ratio <= 1.5:
-        records_points = 15
-    elif ratio <= 2.5:
-        records_points = 30
-    else:
-        records_points = 45
+    # Build full context dict for Gemini
+    employee_data = {
+        "emp_id":                payload.emp_id,
+        "name":                  emp_name,
+        "department":            emp_dept,
+        "records_accessed":      payload.records_accessed_today,
+        "normal_records_per_day": normal_records,
+        "login_hour":            payload.login_hour,
+        "data_exported_mb":      payload.data_exported_mb,
+    }
 
-    # 2. Login Hour Points
-    if 8 <= payload.login_hour <= 18:
-        login_points = 0
-    elif (18 < payload.login_hour <= 22) or (6 <= payload.login_hour < 8):
-        login_points = 15
-    else: # Night hours (22 < hour < 6)
-        login_points = 30
-
-    # 3. Data Exported Points
-    if payload.data_exported_mb <= 10.0:
-        export_points = 0
-    elif payload.data_exported_mb <= 50.0:
-        export_points = 15
-    else:
-        export_points = 25
-
-    # Final Risk Score calculation
-    risk_score = min(100, records_points + login_points + export_points)
-
-    # Risk level & action mappings
-    if risk_score <= 35:
-        risk_level = "LOW"
-        recommended_action = "NO_ACTION"
-    elif risk_score <= 70:
-        risk_level = "MEDIUM"
-        recommended_action = "MONITOR"
-    else:
-        risk_level = "HIGH"
-        recommended_action = "TEMPORARY_SUSPEND"
-
-    # Construct Narrative
-    ratio_str = f"{ratio:.1f}x" if ratio % 1 != 0 else f"{int(ratio)}x"
-
-    if payload.login_hour == 0:
-        hour_str = "12AM"
-    elif payload.login_hour == 12:
-        hour_str = "12PM"
-    elif payload.login_hour < 12:
-        hour_str = f"{payload.login_hour}AM"
-    else:
-        hour_str = f"{payload.login_hour - 12}PM"
-
-    export_str = f"{int(payload.data_exported_mb)}MB" if payload.data_exported_mb % 1 == 0 else f"{payload.data_exported_mb:.1f}MB"
-
-    narrative = f"Employee accessed {ratio_str} normal records at {hour_str}"
-    if export_points > 0:
-        narrative += f" and exported {export_str} data"
-    
-    if risk_level == "HIGH":
-        narrative += " — possible exfiltration"
-    elif risk_level == "MEDIUM":
-        narrative += " — suspicious activity"
+    # Call Gemini (falls back to rule-based only if API call fails at runtime)
+    result = generate_threat_narrative(employee_data)
 
     return EmployeeAnalyzeResponse(
         emp_id=payload.emp_id,
-        risk_score=risk_score,
-        risk_level=risk_level,
-        narrative=narrative,
-        recommended_action=recommended_action
+        risk_score=result["risk_score"],
+        risk_level=result["risk_level"],
+        narrative=result["narrative"],
+        recommended_action=result["recommended_action"],
+        confidence=result.get("confidence", 0.9),
+        source=result.get("source", "unknown")
     )

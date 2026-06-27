@@ -198,7 +198,7 @@ def read_root():
 def analyze_risk(payload: AnalyzeRequest):
     # 1. Location Risk Score Calculation
     if not payload.city:
-        location_risk = 20
+        location_risk = 30
     elif payload.last_login_city and payload.city.strip().lower() == payload.last_login_city.strip().lower():
         location_risk = 0
     else:
@@ -208,39 +208,39 @@ def analyze_risk(payload: AnalyzeRequest):
             is_indian_ip = any(payload.ip_address.strip().startswith(prefix) for prefix in ["49.", "103.", "117."])
         
         if is_indian_ip:
-            location_risk = 35
+            location_risk = 50
         else:
-            location_risk = 65
+            location_risk = 100
 
     # 2. Device Risk Score Calculation
-    device_risk = 55 if payload.is_new_device else 0
+    device_risk = 100 if payload.is_new_device else 0
 
     # 3. Time Risk Score Calculation
     if 8 <= payload.login_hour < 20:
         time_risk = 0
     elif 20 <= payload.login_hour <= 23:
-        time_risk = 35
+        time_risk = 50
     else: # 0 <= login_hour < 8
-        time_risk = 70
+        time_risk = 100
 
     # 4. Behavioral Risk Score Calculation
     if payload.keystroke_variance_ms < 100:
         behavioral_risk = 0
     elif 100 <= payload.keystroke_variance_ms <= 200:
-        behavioral_risk = 40
+        behavioral_risk = 60
     else:
-        behavioral_risk = 75
+        behavioral_risk = 100
 
     # 5. Transaction Risk Score Calculation
     if payload.transaction_amount < 10000:
         transaction_risk = 0
     elif 10000 <= payload.transaction_amount <= 50000:
-        transaction_risk = 30
+        transaction_risk = 50
     else:
-        transaction_risk = 60
+        transaction_risk = 100
 
     # 6. Recovery Risk Score Calculation
-    recovery_risk = 50 if payload.is_recovery_attempt else 0
+    recovery_risk = 100 if payload.is_recovery_attempt else 0
 
     # Weighted Final Score Calculation
     final_score = (

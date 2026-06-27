@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import AlertModal from '../components/AlertModal';
 
 const API_BASE = 'http://localhost:8000/api/v1';
 
@@ -68,6 +69,7 @@ export default function Dashboard() {
   });
 
   const [systemTime, setSystemTime] = useState(new Date().toTimeString().split(' ')[0]);
+  const [modalEvent, setModalEvent] = useState(null);
 
   // Live time ticker
   useEffect(() => {
@@ -421,12 +423,28 @@ export default function Dashboard() {
                   <tr 
                     key={evt.event_id + idx}
                     className={evt.isNew ? 'flash-row' : ''}
+                    onClick={() => {
+                      if (evt.decision === 'HUMAN_REVIEW') {
+                        setModalEvent({
+                          eventId: evt.event_id,
+                          userId: evt.user_id,
+                          riskScore: evt.final_risk_score,
+                          signals: [
+                            { name: 'DEVICE TRUST',  points: 28.4, color: 'var(--red-threat)',  label: 'Unrecognized device detected',   width: 88 },
+                            { name: 'LOCATION RISK', points: 22.1, color: 'var(--orange-mid)',  label: `Login from ${evt.city || 'unknown city'}`, width: 68 },
+                            { name: 'BEHAVIORAL',    points: 14.7, color: 'var(--amber)',       label: 'Keystroke similarity degraded',   width: 46 }
+                          ]
+                        });
+                      }
+                    }}
                     style={{
                       backgroundColor: idx % 2 === 0 ? '#080A0E' : '#0D0F14',
                       borderBottom: '1px solid var(--border)',
                       borderLeft: getDecisionBorder(evt.decision),
-                      transition: 'background-color 0.2s'
+                      transition: 'background-color 0.2s',
+                      cursor: evt.decision === 'HUMAN_REVIEW' ? 'pointer' : 'default'
                     }}
+                    title={evt.decision === 'HUMAN_REVIEW' ? 'Click to open manager review' : ''}
                   >
                     <td className="mono" style={{ padding: '10px 12px', fontSize: '12px', color: 'var(--text-primary)' }}>
                       {evt.event_id}
@@ -652,6 +670,17 @@ export default function Dashboard() {
           © 2026 Team Antigravity
         </span>
       </footer>
+
+      {/* ALERT MODAL — opens on HUMAN_REVIEW row click */}
+      <AlertModal
+        isOpen={!!modalEvent}
+        onClose={() => setModalEvent(null)}
+        onDecision={({ action, reason, eventId }) => {
+          console.log(`Decision: ${action} | Reason: ${reason} | Event: ${eventId}`);
+          setModalEvent(null);
+        }}
+        eventData={modalEvent}
+      />
 
     </div>
   );

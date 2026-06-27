@@ -23,13 +23,12 @@ app = FastAPI(
 )
 
 # Enable CORS for frontend dev server and production Vercel URL
-# NOTE: Replace "https://contextguard-bob-2026.vercel.app" in Step 5
-# with the real Vercel URL once frontend is deployed.
+# CORS: allow local dev server and production Vercel frontend
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:5173",
-        "https://contextguard-bob-2026.vercel.app",  # STEP5_REPLACE
+        "https://contextguard-bob-2026.vercel.app",
     ],
     allow_credentials=True,
     allow_methods=["*"],

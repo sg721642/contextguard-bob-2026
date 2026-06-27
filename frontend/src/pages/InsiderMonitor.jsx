@@ -345,7 +345,6 @@ export default function InsiderMonitor() {
 
   return (
     <>
-      {/* Keyframes and styles */}
       <style>{`
         @keyframes slide-in-right {
           from { transform: translateX(100%); opacity: 0; }
@@ -356,7 +355,7 @@ export default function InsiderMonitor() {
           50%       { opacity: 0; }
         }
         .emp-card {
-          transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+          transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
           cursor: pointer;
         }
         .emp-card:hover {
@@ -392,7 +391,7 @@ export default function InsiderMonitor() {
             <div style={{
               backgroundColor: 'var(--status-red-bg)',
               borderBottom: '1px solid var(--status-red-border)',
-              padding: '10px 24px',
+              padding: '12px 24px',
               display: 'flex',
               alignItems: 'center',
               gap: '10px',
@@ -400,7 +399,7 @@ export default function InsiderMonitor() {
               zIndex: 10
             }}>
               <span className="pulse-red-dot" />
-              <span className="font-mono" style={{ fontSize: '12px', color: 'var(--status-red)', fontWeight: 'bold' }}>
+              <span className="font-mono" style={{ fontSize: '12px', color: 'var(--status-red)', fontWeight: '700' }}>
                 WARNING: {criticalEmployees.length} employee{criticalEmployees.length > 1 ? 's' : ''} flagged with elevated risk scores
                 &nbsp;—&nbsp;
                 {criticalEmployees.map(e => e.id).join(', ')}
@@ -418,8 +417,8 @@ export default function InsiderMonitor() {
             <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
               <Link to="/" style={{
                 display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-secondary)',
-                textDecoration: 'none', fontSize: '13px', fontWeight: '500',
-                padding: '6px 10px', borderRadius: '7px', border: '1px solid var(--border)',
+                textDecoration: 'none', fontSize: '13px', fontWeight: '600',
+                padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--border-strong)',
                 background: 'var(--bg-card-alt)', transition: 'all 0.15s',
               }}
                 onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-primary)'; }}
@@ -431,7 +430,7 @@ export default function InsiderMonitor() {
                 Dashboard
               </Link>
               <span style={{ color: 'var(--border-strong)' }}>/</span>
-              <span style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-primary)', fontFamily: "'Space Grotesk', sans-serif" }}>
+              <span style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text-primary)', fontFamily: "'Space Grotesk', sans-serif" }}>
                 Insider Threat Monitor
               </span>
             </div>
@@ -472,17 +471,17 @@ export default function InsiderMonitor() {
               <h1 style={{ fontSize: '20px', fontWeight: '700', color: 'var(--text-primary)', fontFamily: "'Space Grotesk', sans-serif", margin: 0, letterSpacing: '-0.01em' }}>
                 Insider Threat Monitor
               </h1>
-              <p style={{ fontSize: '13px', color: 'var(--text-secondary)', margin: '2px 0 0' }}>
-                Real-time tracking of internal user access patterns and data transfer anomalies.
+              <p style={{ fontSize: '13px', color: 'var(--text-secondary)', margin: '2px 0 0', fontWeight: '500' }}>
+                Real-time tracking of internal employee access anomalies and data exfiltration pathways.
               </p>
             </div>
 
             <div style={{ display: 'flex', gap: '8px' }}>
-              <span className="badge badge-clear" style={{ padding: '6px 12px', fontSize: '11px' }}>
+              <span className="badge badge-clear" style={{ padding: '6px 14px', fontSize: '11px' }}>
                 {employees.length} Monitored
               </span>
-              <span className="badge badge-block" style={{ padding: '6px 12px', fontSize: '11px' }}>
-                {criticalEmployees.length} Critical Flagged
+              <span className="badge badge-block" style={{ padding: '6px 14px', fontSize: '11px' }}>
+                {criticalEmployees.length} Critical
               </span>
             </div>
           </div>
@@ -496,7 +495,7 @@ export default function InsiderMonitor() {
             <div style={{
               display: 'grid',
               gridTemplateColumns: 'repeat(auto-fill, minmax(360px, 1fr))',
-              gap: '16px'
+              gap: '20px'
             }}>
               {employees.map((emp) => {
                 const isSelected   = selected?.id === emp.id;
@@ -513,7 +512,6 @@ export default function InsiderMonitor() {
                     style={{
                       backgroundColor: isSelected ? 'var(--bg-card-alt)' : 'var(--bg-card)',
                       border: `1px solid ${isSelected ? 'var(--accent)' : 'var(--border)'}`,
-                      borderRadius: 'var(--radius-md)',
                       padding: '20px',
                       display: 'flex',
                       flexDirection: 'column',
@@ -521,7 +519,7 @@ export default function InsiderMonitor() {
                       position: 'relative',
                     }}
                   >
-                    {/* Status badge in top-right */}
+                    {/* Status badge */}
                     {status !== 'ACTIVE' && (
                       <div style={{
                         position: 'absolute', top: '16px', right: '16px',
@@ -550,7 +548,7 @@ export default function InsiderMonitor() {
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                       <div style={{
                         width: '40px', height: '40px', borderRadius: '50%',
-                        background: 'linear-gradient(135deg, #FF6A13 0%, #FF8A40 100%)',
+                        background: 'linear-gradient(135deg, #FF6A13 0%, #E05206 100%)',
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                         fontSize: '13px', fontWeight: '700', color: '#fff',
                         boxShadow: 'var(--shadow-sm)',
@@ -562,7 +560,7 @@ export default function InsiderMonitor() {
                           {emp.name}
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '2px' }}>
-                          <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontFamily: "'Inter', sans-serif" }}>
+                          <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontFamily: "'Inter', sans-serif", fontWeight: '500' }}>
                             {emp.id}
                           </span>
                           <span style={{
@@ -579,14 +577,14 @@ export default function InsiderMonitor() {
                     </div>
 
                     {/* Risk progress section */}
-                    <div style={{ background: 'var(--bg-card-alt)', padding: '12px 14px', borderRadius: '8px', border: '1px solid var(--border)' }}>
+                    <div style={{ background: 'var(--bg-card-alt)', padding: '12px 14px', borderRadius: '10px', border: '1px solid var(--border)' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', alignItems: 'center' }}>
                         <span style={{ fontSize: '11px', fontWeight: '600', color: 'var(--text-secondary)' }}>RISK LEVEL</span>
                         <span style={{ fontSize: '12px', fontWeight: '700', color: getRiskColor(emp.level), fontFamily: "'Space Grotesk', sans-serif" }}>
                           {emp.risk}/100 · {emp.level}
                         </span>
                       </div>
-                      <div style={{ height: '6px', background: 'var(--border)', borderRadius: '99px', overflow: 'hidden' }}>
+                      <div style={{ height: '6px', background: '#E2E8F0', borderRadius: '99px', overflow: 'hidden' }}>
                         <div style={{
                           width: `${emp.risk}%`, height: '100%',
                           background: `linear-gradient(90deg, ${getRiskColor(emp.level)}dd, ${getRiskColor(emp.level)})`,
@@ -598,19 +596,19 @@ export default function InsiderMonitor() {
                     {/* Detailed metrics logs */}
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px', marginTop: '4px' }}>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                        <span style={{ fontSize: '10px', color: 'var(--text-tertiary)' }}>RECORDS today</span>
+                        <span style={{ fontSize: '10px', color: 'var(--text-tertiary)', fontWeight: '600' }}>RECORDS</span>
                         <span style={{ fontSize: '13px', fontWeight: '700', color: badRecords ? 'var(--status-red)' : 'var(--text-primary)', fontFamily: "'Space Grotesk', sans-serif" }}>
                           {emp.records} <span style={{ fontSize: '10px', color: 'var(--text-tertiary)', fontWeight: '400' }}>/ {emp.normalRecords}</span>
                         </span>
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                        <span style={{ fontSize: '10px', color: 'var(--text-tertiary)' }}>LOGIN HOUR</span>
+                        <span style={{ fontSize: '10px', color: 'var(--text-tertiary)', fontWeight: '600' }}>LOGIN HOUR</span>
                         <span style={{ fontSize: '13px', fontWeight: '700', color: badOutsideHrs ? 'var(--status-red)' : 'var(--text-primary)', fontFamily: "'Space Grotesk', sans-serif" }}>
                           {emp.loginTime}
                         </span>
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                        <span style={{ fontSize: '10px', color: 'var(--text-tertiary)' }}>DATA EXPORTED</span>
+                        <span style={{ fontSize: '10px', color: 'var(--text-tertiary)', fontWeight: '600' }}>EXPORT VOLUME</span>
                         <span style={{ fontSize: '13px', fontWeight: '700', color: badExport ? 'var(--status-red)' : 'var(--text-primary)', fontFamily: "'Space Grotesk', sans-serif" }}>
                           {emp.dataExported} <span style={{ fontSize: '10px', color: 'var(--text-tertiary)', fontWeight: '400' }}>MB</span>
                         </span>
@@ -652,7 +650,7 @@ export default function InsiderMonitor() {
                 <span className="font-mono" style={{ fontSize: '13px', color: 'var(--accent)', fontWeight: '700' }}>
                   {selected.id}
                 </span>
-                <span style={{ fontSize: '12px', color: 'var(--text-secondary)', marginLeft: '10px', fontWeight: '500' }}>
+                <span style={{ fontSize: '12px', color: 'var(--text-secondary)', marginLeft: '10px', fontWeight: '600' }}>
                   {selected.department} Department
                 </span>
               </div>
@@ -678,7 +676,7 @@ export default function InsiderMonitor() {
               <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                 <div style={{
                   width: '48px', height: '48px', borderRadius: '50%',
-                  background: 'linear-gradient(135deg, #FF6A13 0%, #FF8A40 100%)',
+                  background: 'linear-gradient(135deg, #FF6A13 0%, #E05206 100%)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   fontSize: '16px', fontWeight: '700', color: '#fff',
                 }}>
@@ -695,7 +693,7 @@ export default function InsiderMonitor() {
                     <span style={{ fontSize: '16px', fontWeight: '700', color: getRiskColor(selected.level), fontFamily: "'Space Grotesk', sans-serif" }}>
                       {selected.risk}
                     </span>
-                    <span style={{ fontSize: '11px', color: 'var(--text-tertiary)' }}>/ 100</span>
+                    <span style={{ fontSize: '11px', color: 'var(--text-tertiary)', fontWeight: '500' }}>/ 100</span>
                     <span className="badge" style={{
                       fontSize: '10px',
                       backgroundColor: getRiskBg(selected.level),
@@ -724,13 +722,13 @@ export default function InsiderMonitor() {
                   { label: 'Data Exported', value: `${selected.dataExported} MB`, normal: 'allowance: 10 MB', bad: isHighExport(selected) },
                 ].map(({ label, value, normal, bad }) => (
                   <div key={label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-                    <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: '500' }}>{label}</span>
+                    <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: '600' }}>{label}</span>
                     <div style={{ textAlign: 'right' }}>
                       <span style={{ fontSize: '13px', fontWeight: '700', color: bad ? 'var(--status-red)' : 'var(--text-primary)', fontFamily: "'Space Grotesk', sans-serif" }}>
                         {value}
                       </span>
                       <br />
-                      <span style={{ fontSize: '10px', color: 'var(--text-tertiary)' }}>{normal}</span>
+                      <span style={{ fontSize: '10px', color: 'var(--text-tertiary)', fontWeight: '500' }}>{normal}</span>
                     </div>
                   </div>
                 ))}
@@ -745,24 +743,24 @@ export default function InsiderMonitor() {
                     </svg>
                   </div>
                   <div>
-                    <div style={{ fontSize: '12px', fontWeight: '600', color: 'var(--text-primary)' }}>AI Threat Assessment</div>
-                    <div style={{ fontSize: '10px', color: 'var(--text-tertiary)' }}>Powered by Gemini 2.5 Flash</div>
+                    <div style={{ fontSize: '12px', fontWeight: '700', color: 'var(--text-primary)' }}>AI Threat Assessment</div>
+                    <div style={{ fontSize: '10px', color: 'var(--text-tertiary)', fontWeight: '500' }}>Powered by Gemini 2.5 Flash</div>
                   </div>
                 </div>
 
                 <div style={{
                   backgroundColor: '#0F172A',
                   border: '1px solid rgba(255,106,19,0.15)',
-                  borderRadius: '8px',
+                  borderRadius: '10px',
                   padding: '16px'
                 }}>
                   <pre style={{
-                    margin: 0, fontSize: '12px',
-                    color: '#94A3B8', lineHeight: '1.9',
+                    margin: 0, fontSize: '12.5px',
+                    color: '#E2E8F0', lineHeight: '1.9',
                     whiteSpace: 'pre-wrap',
                     fontFamily: "'JetBrains Mono', 'Fira Code', monospace"
                   }}>
-                    <span style={{ color: 'var(--accent)' }}>{selected.analysis}</span>
+                    <span style={{ color: '#F1F5F9' }}>{selected.analysis}</span>
                     <span className="blink-im">█</span>
                   </pre>
                   <div style={{
@@ -792,7 +790,7 @@ export default function InsiderMonitor() {
                 <button
                   className="btn btn-primary"
                   onClick={() => handleAction(selected.id, 'FLAGGED')}
-                  style={{ justifyContent: 'center', height: '38px', fontSize: '12px', fontWeight: '600' }}
+                  style={{ justifyContent: 'center', height: '38px', fontSize: '12px', fontWeight: '600', background: 'linear-gradient(135deg, #FF6A13 0%, #EA580C 100%)', boxShadow: '0 4px 12px rgba(255,106,19,0.2)' }}
                 >
                   Flag for Investigation
                 </button>

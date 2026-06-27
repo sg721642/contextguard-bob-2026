@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import Dashboard from './pages/Dashboard';
 import UserProfile from './pages/UserProfile';
@@ -11,11 +11,11 @@ const NAV_ITEMS = [
     exact: true,
     label: 'Dashboard',
     icon: (
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="3" y="3" width="7" height="8" rx="1.5"/>
-        <rect x="14" y="3" width="7" height="4" rx="1.5"/>
-        <rect x="14" y="11" width="7" height="10" rx="1.5"/>
-        <rect x="3" y="15" width="7" height="6" rx="1.5"/>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="3" y="3" width="7" height="9" rx="1" />
+        <rect x="14" y="3" width="7" height="5" rx="1" />
+        <rect x="14" y="12" width="7" height="9" rx="1" />
+        <rect x="3" y="16" width="7" height="5" rx="1" />
       </svg>
     )
   },
@@ -24,10 +24,11 @@ const NAV_ITEMS = [
     match: '/user',
     label: 'User Profiles',
     icon: (
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="9" cy="7" r="4"/>
-        <path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/>
-        <path d="M19 8v6M22 11h-6"/>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+        <circle cx="9" cy="7" r="4" />
+        <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
       </svg>
     )
   },
@@ -36,9 +37,9 @@ const NAV_ITEMS = [
     match: '/insider',
     label: 'Insider Monitor',
     icon: (
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-        <path d="M9 12l2 2 4-4"/>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+        <path d="M9 12l2 2 4-4" />
       </svg>
     )
   },
@@ -69,65 +70,69 @@ const Sidebar = () => {
 
       {/* Brand */}
       <div style={{
-        padding: '20px 18px 16px',
-        borderBottom: '1px solid rgba(255,255,255,0.07)',
+        padding: '24px 20px 20px',
+        borderBottom: '1px solid rgba(255,255,255,0.06)',
       }}>
-        {/* BOB Logo + ContextGuard */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' }}>
-          {/* BOB "B" mark — orange geometric icon */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '6px' }}>
+          {/* BOB Orange logo mark */}
           <div style={{
-            width: '32px', height: '32px', borderRadius: '8px',
-            background: 'linear-gradient(135deg, #FF6A13 0%, #FF8A40 100%)',
+            width: '36px', height: '36px', borderRadius: '10px',
+            background: 'linear-gradient(135deg, #FF6A13 0%, #E05206 100%)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            flexShrink: 0, boxShadow: '0 2px 8px rgba(255,106,19,0.35)',
+            flexShrink: 0, boxShadow: '0 4px 12px rgba(255,106,19,0.3)',
           }}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="white">
-              <path d="M6 4h8a4 4 0 0 1 0 8H6zM6 12h9a4 4 0 0 1 0 8H6z"/>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
+              <path d="M7 5h7a3.5 3.5 0 0 1 0 7H7zm0 7h8a3.5 3.5 0 0 1 0 7H7z"/>
             </svg>
           </div>
           <div>
             <div style={{
-              fontSize: '14px', fontWeight: '700', color: '#F1F5F9',
+              fontSize: '15px', fontWeight: '700', color: '#FFFFFF',
               fontFamily: "'Space Grotesk', sans-serif", letterSpacing: '-0.01em',
               lineHeight: 1.2,
             }}>ContextGuard</div>
             <div style={{
-              fontSize: '10px', color: 'rgba(255,255,255,0.38)',
-              fontFamily: "'Inter', sans-serif", letterSpacing: '0.03em',
+              fontSize: '10px', color: 'rgba(255,255,255,0.4)',
+              fontFamily: "'Inter', sans-serif", letterSpacing: '0.04em',
               lineHeight: 1,
             }}>Identity Trust Engine</div>
           </div>
         </div>
-        {/* Bank of Baroda label */}
+        
+        {/* Sub-label showing banking association */}
         <div style={{
-          marginTop: '10px',
-          padding: '6px 10px',
-          borderRadius: '6px',
-          background: 'rgba(255,106,19,0.10)',
-          border: '1px solid rgba(255,106,19,0.18)',
-          display: 'flex', alignItems: 'center', gap: '7px',
+          marginTop: '12px',
+          padding: '8px 12px',
+          borderRadius: '8px',
+          background: 'rgba(255,106,19,0.08)',
+          border: '1px solid rgba(255,106,19,0.15)',
+          display: 'flex', alignItems: 'center', gap: '8px',
         }}>
           <img
             src="/bob-logo.png"
             alt="Bank of Baroda"
-            style={{ width: '18px', height: '18px', objectFit: 'contain', filter: 'brightness(0) saturate(100%) invert(48%) sepia(89%) saturate(742%) hue-rotate(359deg) brightness(101%) contrast(103%)' }}
+            style={{ 
+              width: '18px', height: '18px', objectFit: 'contain',
+              filter: 'brightness(0) saturate(100%) invert(48%) sepia(89%) saturate(742%) hue-rotate(359deg) brightness(101%) contrast(103%)'
+            }}
             onError={(e) => { e.target.style.display = 'none'; }}
           />
           <span style={{
-            fontSize: '10px', color: 'rgba(255,255,255,0.55)',
-            fontFamily: "'Inter', sans-serif", fontWeight: '500',
+            fontSize: '10px', color: 'rgba(255,255,255,0.6)',
+            fontFamily: "'Inter', sans-serif", fontWeight: '600',
+            letterSpacing: '0.02em',
           }}>Bank of Baroda</span>
         </div>
       </div>
 
       {/* Nav Section */}
-      <div style={{ padding: '12px 10px', flex: 1 }}>
+      <div style={{ padding: '16px 14px', flex: 1 }}>
         <div style={{
-          fontSize: '10px', fontWeight: '600', color: 'rgba(255,255,255,0.25)',
-          letterSpacing: '0.08em', padding: '4px 8px 8px', textTransform: 'uppercase',
+          fontSize: '10px', fontWeight: '700', color: 'rgba(255,255,255,0.3)',
+          letterSpacing: '0.1em', padding: '0 8px 10px', textTransform: 'uppercase',
           fontFamily: "'Inter', sans-serif",
-        }}>Navigation</div>
-        <nav style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+        }}>Platform Navigation</div>
+        <nav style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
           {NAV_ITEMS.map((item) => {
             const active = isActive(item);
             return (
@@ -136,33 +141,39 @@ const Sidebar = () => {
                 to={item.path}
                 title={item.label}
                 style={{
-                  display: 'flex', alignItems: 'center', gap: '10px',
-                  padding: '9px 10px',
-                  borderRadius: '8px',
+                  display: 'flex', alignItems: 'center', gap: '12px',
+                  padding: '11px 14px',
+                  borderRadius: '10px',
                   textDecoration: 'none',
-                  color: active ? '#FFFFFF' : 'rgba(255,255,255,0.45)',
-                  background: active ? 'rgba(255,106,19,0.14)' : 'transparent',
-                  transition: 'all 0.15s ease',
+                  color: active ? '#FFFFFF' : 'rgba(255,255,255,0.5)',
+                  background: active ? 'rgba(255,106,19,0.15)' : 'transparent',
+                  transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
                   position: 'relative',
                   fontFamily: "'Inter', sans-serif",
                   fontSize: '13px',
-                  fontWeight: active ? '600' : '400',
+                  fontWeight: active ? '600' : '500',
                   borderLeft: active ? '3px solid #FF6A13' : '3px solid transparent',
                 }}
                 onMouseEnter={(e) => {
                   if (!active) {
-                    e.currentTarget.style.background = 'rgba(255,255,255,0.06)';
-                    e.currentTarget.style.color = 'rgba(255,255,255,0.75)';
+                    e.currentTarget.style.background = 'var(--bg-sidebar-hover)';
+                    e.currentTarget.style.color = 'rgba(255,255,255,0.85)';
                   }
                 }}
                 onMouseLeave={(e) => {
                   if (!active) {
                     e.currentTarget.style.background = 'transparent';
-                    e.currentTarget.style.color = 'rgba(255,255,255,0.45)';
+                    e.currentTarget.style.color = 'rgba(255,255,255,0.5)';
                   }
                 }}
               >
-                <span style={{ color: active ? '#FF6A13' : 'inherit', transition: 'color 0.15s', flexShrink: 0 }}>
+                <span style={{ 
+                  color: active ? '#FF6A13' : 'inherit', 
+                  transition: 'color 0.2s', 
+                  flexShrink: 0,
+                  display: 'flex',
+                  alignItems: 'center'
+                }}>
                   {item.icon}
                 </span>
                 <span>{item.label}</span>
@@ -171,7 +182,7 @@ const Sidebar = () => {
                     marginLeft: 'auto',
                     width: '6px', height: '6px', borderRadius: '50%',
                     background: '#FF6A13',
-                    boxShadow: '0 0 6px rgba(255,106,19,0.6)',
+                    boxShadow: '0 0 8px #FF6A13',
                   }} />
                 )}
               </Link>
@@ -180,24 +191,23 @@ const Sidebar = () => {
         </nav>
       </div>
 
-      {/* Bottom — System Status */}
+      {/* Bottom Status */}
       <div style={{
-        padding: '14px 18px',
-        borderTop: '1px solid rgba(255,255,255,0.07)',
+        padding: '16px 20px',
+        borderTop: '1px solid rgba(255,255,255,0.06)',
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '7px', marginBottom: '8px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
           <span style={{
-            width: '7px', height: '7px', borderRadius: '50%',
-            background: '#10B981', boxShadow: '0 0 6px rgba(16,185,129,0.5)',
-            animation: 'pulse-green 2s infinite ease-in-out',
+            width: '8px', height: '8px', borderRadius: '50%',
+            background: '#10B981', boxShadow: '0 0 8px rgba(16,185,129,0.5)',
             display: 'inline-block',
           }} />
-          <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.45)', fontFamily: "'Inter', sans-serif" }}>
-            System Operational
+          <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)', fontFamily: "'Inter', sans-serif", fontWeight: '500' }}>
+            SOC Status: Normal
           </span>
         </div>
-        <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.20)', fontFamily: "'Inter', sans-serif" }}>
-          ContextGuard v2.0.0
+        <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.25)', fontFamily: "'Inter', sans-serif" }}>
+          ContextGuard Security Suite
         </div>
       </div>
     </aside>

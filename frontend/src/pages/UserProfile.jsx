@@ -58,9 +58,9 @@ const getDecisionBadgeClass = (d) => {
 };
 
 const getTrustConfig = (level) => {
-  if (level === 'TRUSTED')   return { cls: 'badge-clear',  label: 'Trusted',   color: 'var(--status-green)' };
-  if (level === 'MONITORED') return { cls: 'badge-step',   label: 'Monitored', color: 'var(--status-amber)' };
-  return                             { cls: 'badge-block', label: 'Flagged',   color: 'var(--status-red)' };
+  if (level === 'TRUSTED')   return { cls: 'badge-clear',  label: 'Trusted Account',   color: 'var(--status-green)' };
+  if (level === 'MONITORED') return { cls: 'badge-step',   label: 'Under Monitoring', color: 'var(--status-amber)' };
+  return                             { cls: 'badge-block', label: 'Flagged / Restricted',   color: 'var(--status-red)' };
 };
 
 export default function UserProfile() {
@@ -156,11 +156,12 @@ account takeover post-credential compromise.`;
         .dna-tip {
           position: absolute; bottom: calc(100% + 6px); left: 50%;
           transform: translateX(-50%);
-          background: var(--bg-card); border: 1px solid var(--border);
-          border-radius: 6px; padding: 5px 9px;
+          background: var(--bg-card); border: 1px solid var(--border-strong);
+          border-radius: 8px; padding: 6px 10px;
           font-size: 11px; color: var(--text-primary); white-space: nowrap;
           pointer-events: none; opacity: 0; transition: opacity 0.15s;
           box-shadow: var(--shadow-md); z-index: 100;
+          font-weight: 600;
         }
         .dna-cell:hover .dna-tip { opacity: 1; }
         @keyframes blink-cursor { 0%,100%{opacity:1} 50%{opacity:0} }
@@ -176,8 +177,8 @@ account takeover post-credential compromise.`;
         <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
           <Link to="/" style={{
             display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--text-secondary)',
-            textDecoration: 'none', fontSize: '13px', fontWeight: '500',
-            padding: '6px 10px', borderRadius: '7px', border: '1px solid var(--border)',
+            textDecoration: 'none', fontSize: '13px', fontWeight: '600',
+            padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--border-strong)',
             background: 'var(--bg-card-alt)', transition: 'all 0.15s',
           }}
             onMouseEnter={e => { e.currentTarget.style.color = 'var(--text-primary)'; }}
@@ -187,8 +188,8 @@ account takeover post-credential compromise.`;
             Dashboard
           </Link>
           <span style={{ color: 'var(--border-strong)' }}>/</span>
-          <span style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-primary)', fontFamily: "'Space Grotesk', sans-serif" }}>
-            User Profile
+          <span style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text-primary)', fontFamily: "'Space Grotesk', sans-serif" }}>
+            User Profiles
           </span>
         </div>
         <img src="/bob-logo.png" alt="Bank of Baroda" style={{ height: '28px', objectFit: 'contain' }}
@@ -196,21 +197,20 @@ account takeover post-credential compromise.`;
       </header>
 
       {/* ── BODY ──────────────────────────────────────────────── */}
-      <main style={{ flex: 1, padding: '24px 28px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+      <main style={{ flex: 1, padding: '24px 28px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
 
-        {/* User Title Row */}
-        <div style={{
-          background: 'var(--bg-card)', border: '1px solid var(--border)',
-          borderRadius: 'var(--radius-md)', padding: '20px 24px',
-          boxShadow: 'var(--shadow-sm)',
+        {/* User Title Row Card */}
+        <div className="card" style={{
+          padding: '24px',
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
             <div style={{
               width: '52px', height: '52px', borderRadius: '50%',
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              background: 'linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontSize: '18px', fontWeight: '700', color: '#fff',
+              boxShadow: '0 4px 10px rgba(79,70,229,0.2)',
             }}>
               {currentUserId.replace('USR-', '').substring(0, 2)}
             </div>
@@ -218,73 +218,74 @@ account takeover post-credential compromise.`;
               <div style={{ fontSize: '22px', fontWeight: '700', color: 'var(--text-primary)', fontFamily: "'Space Grotesk', sans-serif", letterSpacing: '-0.01em', lineHeight: 1.2 }}>
                 {getMaskedId(currentUserId)}
               </div>
-              <div style={{ fontSize: '13px', color: 'var(--text-secondary)', marginTop: '2px' }}>
-                Account age: 847 days · Home city: Mumbai · Normal hours: 9AM–7PM
+              <div style={{ fontSize: '13px', color: 'var(--text-secondary)', marginTop: '4px', fontWeight: '500' }}>
+                Account History: 847 days active · Branch: Mumbai H.O. · Logged shift: 9AM–7PM
               </div>
             </div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <span className={`badge ${trustCfg.cls}`} style={{ fontSize: '12px', padding: '5px 14px' }}>
+            <span className={`badge ${trustCfg.cls}`} style={{ fontSize: '11px', padding: '6px 14px' }}>
               {trustCfg.label}
             </span>
             <div style={{ display: 'flex', gap: '8px' }}>
               <button onClick={() => handleAction('CLEAR')} style={{
-                padding: '8px 16px', borderRadius: '7px', border: 'none',
-                background: 'var(--status-green)', color: '#fff', fontSize: '12px',
-                fontWeight: '600', cursor: 'pointer', transition: 'all 0.15s',
+                padding: '10px 18px', borderRadius: 'var(--radius-sm)', border: 'none',
+                background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)', color: '#fff', fontSize: '12px',
+                fontWeight: '600', cursor: 'pointer', transition: 'all 0.2s',
                 display: 'flex', alignItems: 'center', gap: '6px',
+                boxShadow: '0 4px 12px rgba(16,185,129,0.2)',
               }}
-                onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 4px 12px rgba(16,185,129,0.30)'; }}
-                onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = ''; }}
+                onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-1.5px)'; e.currentTarget.style.boxShadow = '0 6px 16px rgba(16,185,129,0.3)'; }}
+                onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = '0 4px 12px rgba(16,185,129,0.2)'; }}
               >
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg>
                 Clear User
               </button>
               <button onClick={() => handleAction('KYC')} style={{
-                padding: '8px 16px', borderRadius: '7px', border: 'none',
-                background: 'var(--status-amber)', color: '#fff', fontSize: '12px',
-                fontWeight: '600', cursor: 'pointer', transition: 'all 0.15s',
+                padding: '10px 18px', borderRadius: 'var(--radius-sm)', border: 'none',
+                background: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)', color: '#fff', fontSize: '12px',
+                fontWeight: '600', cursor: 'pointer', transition: 'all 0.2s',
+                boxShadow: '0 4px 12px rgba(245,158,11,0.2)',
               }}
-                onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-1px)'; }}
-                onMouseLeave={e => { e.currentTarget.style.transform = ''; }}
+                onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-1.5px)'; e.currentTarget.style.boxShadow = '0 6px 16px rgba(245,158,11,0.3)'; }}
+                onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = '0 4px 12px rgba(245,158,11,0.2)'; }}
               >Require KYC</button>
               <button onClick={() => handleAction('FREEZE')} style={{
-                padding: '8px 16px', borderRadius: '7px', border: 'none',
-                background: 'var(--status-red)', color: '#fff', fontSize: '12px',
-                fontWeight: '600', cursor: 'pointer', transition: 'all 0.15s',
+                padding: '10px 18px', borderRadius: 'var(--radius-sm)', border: 'none',
+                background: 'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)', color: '#fff', fontSize: '12px',
+                fontWeight: '600', cursor: 'pointer', transition: 'all 0.2s',
+                boxShadow: '0 4px 12px rgba(239,68,68,0.2)',
               }}
-                onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-1px)'; }}
-                onMouseLeave={e => { e.currentTarget.style.transform = ''; }}
+                onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-1.5px)'; e.currentTarget.style.boxShadow = '0 6px 16px rgba(239,68,68,0.3)'; }}
+                onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = '0 4px 12px rgba(239,68,68,0.2)'; }}
               >Freeze Account</button>
             </div>
           </div>
         </div>
 
         {/* 30-Day Trust History (DNA) */}
-        <div style={{
-          background: 'var(--bg-card)', border: '1px solid var(--border)',
-          borderRadius: 'var(--radius-md)', padding: '20px 24px',
-          boxShadow: 'var(--shadow-sm)',
+        <div className="card" style={{
+          padding: '24px',
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
-            <h3 style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-primary)', margin: 0 }}>30-Day Trust History</h3>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+            <h3 style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text-primary)', margin: 0, fontFamily: "'Space Grotesk', sans-serif" }}>30-Day Trust History</h3>
             <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
               {[['≤30', 'var(--status-green)', 'Safe'], ['31–60', 'var(--status-amber)', 'Moderate'], ['61–85', 'var(--status-orange)', 'Elevated'], ['>85', 'var(--status-red)', 'Critical']].map(([range, color, label]) => (
-                <div key={range} style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                  <div style={{ width: '10px', height: '10px', borderRadius: '2px', background: color }} />
-                  <span style={{ fontSize: '11px', color: 'var(--text-tertiary)' }}>{label}</span>
+                <div key={range} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <div style={{ width: '10px', height: '10px', borderRadius: '3px', background: color }} />
+                  <span style={{ fontSize: '11px', color: 'var(--text-tertiary)', fontWeight: '600' }}>{label}</span>
                 </div>
               ))}
             </div>
           </div>
-          <div style={{ display: 'flex', gap: '3px', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
             {dynamicDna.map((item, idx) => (
               <div key={idx} className="dna-cell">
                 <div style={{
-                  width: '20px', height: '36px', borderRadius: '3px',
+                  width: '21px', height: '38px', borderRadius: '4px',
                   background: getScoreColor(item.score),
                   opacity: 0.85,
-                  transition: 'opacity 0.15s, transform 0.15s',
+                  transition: 'all 0.15s ease',
                 }}
                   onMouseEnter={e => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.transform = 'scaleY(1.08)'; }}
                   onMouseLeave={e => { e.currentTarget.style.opacity = '0.85'; e.currentTarget.style.transform = 'scaleY(1)'; }}
@@ -295,15 +296,13 @@ account takeover post-credential compromise.`;
           </div>
         </div>
 
-        {/* Chart + Event Log */}
-        <div style={{ display: 'flex', gap: '20px' }}>
-          {/* Chart */}
-          <div style={{
-            flex: 1, background: 'var(--bg-card)', border: '1px solid var(--border)',
-            borderRadius: 'var(--radius-md)', padding: '20px 24px',
-            boxShadow: 'var(--shadow-sm)',
+        {/* Chart + Event Log Grid */}
+        <div style={{ display: 'flex', gap: '24px' }}>
+          {/* Chart Card */}
+          <div className="card" style={{
+            flex: 1, padding: '24px',
           }}>
-            <h3 style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-primary)', margin: '0 0 16px' }}>
+            <h3 style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text-primary)', margin: '0 0 16px', fontFamily: "'Space Grotesk', sans-serif" }}>
               Trust Score Trend — Last 30 Days
             </h3>
             <div style={{ height: '220px' }}>
@@ -311,18 +310,18 @@ account takeover post-credential compromise.`;
                 <LineChart data={dynamicDna} margin={{ top: 8, right: 10, left: -20, bottom: 0 }}>
                   <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" vertical={false} />
                   <XAxis dataKey="date" tickFormatter={v => v.substring(8, 10)}
-                    stroke="var(--text-tertiary)" style={{ fontSize: '10px', fontFamily: "'Inter', sans-serif" }} />
+                    stroke="var(--text-tertiary)" style={{ fontSize: '10px', fontFamily: "'Inter', sans-serif", fontWeight: '500' }} />
                   <YAxis domain={[0, 100]} stroke="var(--text-tertiary)"
-                    style={{ fontSize: '10px', fontFamily: "'Inter', sans-serif" }} />
+                    style={{ fontSize: '10px', fontFamily: "'Inter', sans-serif", fontWeight: '500' }} />
                   <ChartTooltip contentStyle={{
-                    background: 'var(--bg-card)', border: '1px solid var(--border)',
+                    background: 'var(--bg-card)', border: '1px solid var(--border-strong)',
                     borderRadius: '8px', fontSize: '12px', fontFamily: "'Inter', sans-serif",
                     boxShadow: 'var(--shadow-md)',
                   }} itemStyle={{ color: 'var(--text-primary)' }} labelStyle={{ color: 'var(--text-secondary)' }} />
                   <ReferenceLine y={60} stroke="var(--status-red)" strokeDasharray="4 4"
-                    label={{ value: 'Risky', fill: 'var(--status-red)', fontSize: 10, position: 'right' }} />
+                    label={{ value: 'Risky', fill: 'var(--status-red)', fontSize: 10, position: 'right', fontWeight: '600' }} />
                   <ReferenceLine y={30} stroke="var(--status-green)" strokeDasharray="4 4"
-                    label={{ value: 'Safe', fill: 'var(--status-green)', fontSize: 10, position: 'right' }} />
+                    label={{ value: 'Safe', fill: 'var(--status-green)', fontSize: 10, position: 'right', fontWeight: '600' }} />
                   <Line type="monotone" dataKey="score" stroke="var(--accent)" strokeWidth={2.5}
                     dot={{ r: 2, stroke: 'var(--accent)', fill: 'var(--bg-card)' }}
                     activeDot={{ r: 5, stroke: 'var(--accent)', fill: 'var(--bg-card)', strokeWidth: 2 }} />
@@ -331,44 +330,43 @@ account takeover post-credential compromise.`;
             </div>
           </div>
 
-          {/* Event Log */}
-          <div style={{
+          {/* Event Log Table Card */}
+          <div className="card-elevated" style={{
             flex: 1, background: 'var(--bg-card)', border: '1px solid var(--border)',
-            borderRadius: 'var(--radius-md)', boxShadow: 'var(--shadow-sm)',
-            display: 'flex', flexDirection: 'column', overflow: 'hidden',
+            borderRadius: 'var(--radius-md)', display: 'flex', flexDirection: 'column', overflow: 'hidden',
           }}>
             <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', flexShrink: 0 }}>
-              <h3 style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-primary)', margin: 0 }}>Event Log</h3>
+              <h3 style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text-primary)', margin: 0, fontFamily: "'Space Grotesk', sans-serif" }}>Event Log History</h3>
             </div>
             <div style={{ flex: 1, overflowY: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
                   <tr style={{ background: 'var(--bg-card-alt)', borderBottom: '1px solid var(--border)', position: 'sticky', top: 0, zIndex: 5 }}>
-                    {['Date', 'City', 'Device', 'Score', 'Decision', 'Action'].map((h, i) => (
-                      <th key={i} style={{ padding: '9px 14px', textAlign: i >= 3 ? 'center' : 'left', fontSize: '11px', fontWeight: '600', color: 'var(--text-tertiary)', letterSpacing: '0.04em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>{h}</th>
+                    {['Date', 'City', 'Device Status', 'Score', 'Decision', 'Action'].map((h, i) => (
+                      <th key={i} style={{ padding: '10px 16px', textAlign: i >= 3 ? 'center' : 'left', fontSize: '11px', fontWeight: '700', color: 'var(--text-secondary)', letterSpacing: '0.04em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>{h}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
                   {logs.map((log, idx) => (
                     <tr key={idx} style={{ borderBottom: '1px solid var(--border)', transition: 'background 0.12s' }}
-                      onMouseEnter={e => { e.currentTarget.style.background = 'rgba(241,245,249,0.8)'; }}
+                      onMouseEnter={e => { e.currentTarget.style.background = '#F1F5F9'; }}
                       onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}>
-                      <td style={{ padding: '9px 14px', fontSize: '12px', color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>{log.date.split(' ')[0]}</td>
-                      <td style={{ padding: '9px 14px', fontSize: '12px', color: 'var(--text-secondary)' }}>{log.city}</td>
-                      <td style={{ padding: '9px 14px', fontSize: '12px', color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
-                        <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                      <td style={{ padding: '10px 16px', fontSize: '12px', color: 'var(--text-secondary)', fontWeight: '500', whiteSpace: 'nowrap' }}>{log.date.split(' ')[0]}</td>
+                      <td style={{ padding: '10px 16px', fontSize: '12px', color: 'var(--text-secondary)', fontWeight: '500' }}>{log.city}</td>
+                      <td style={{ padding: '10px 16px', fontSize: '12px', color: 'var(--text-secondary)', fontWeight: '500', whiteSpace: 'nowrap' }}>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                           <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: log.device === 'New Device' ? 'var(--status-red)' : 'var(--status-green)', display: 'inline-block' }} />
                           {log.device}
                         </span>
                       </td>
-                      <td style={{ padding: '9px 14px', textAlign: 'center' }}>
+                      <td style={{ padding: '10px 16px', textAlign: 'center' }}>
                         <span style={{ fontSize: '12px', fontWeight: '700', color: getScoreColor(log.score), fontFamily: "'Space Grotesk', sans-serif" }}>{log.score}</span>
                       </td>
-                      <td style={{ padding: '9px 14px', textAlign: 'center' }}>
+                      <td style={{ padding: '10px 16px', textAlign: 'center' }}>
                         <span className={`badge ${getDecisionBadgeClass(log.decision)}`} style={{ fontSize: '10px' }}>{log.decision}</span>
                       </td>
-                      <td style={{ padding: '9px 14px', fontSize: '11px', color: 'var(--text-tertiary)', textAlign: 'center', whiteSpace: 'nowrap' }}>{log.action}</td>
+                      <td style={{ padding: '10px 16px', fontSize: '11px', color: 'var(--text-tertiary)', fontWeight: '600', textAlign: 'center', whiteSpace: 'nowrap' }}>{log.action}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -378,33 +376,31 @@ account takeover post-credential compromise.`;
         </div>
 
         {/* AI Threat Assessment */}
-        <div style={{
-          background: 'var(--bg-card)', border: '1px solid var(--border)',
-          borderRadius: 'var(--radius-md)', padding: '20px 24px',
-          boxShadow: 'var(--shadow-sm)',
+        <div className="card" style={{
+          padding: '24px',
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
             <div style={{ width: '34px', height: '34px', borderRadius: '8px', background: 'var(--accent-dim)', border: '1px solid var(--accent-border)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent)' }}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
             </div>
             <div>
-              <div style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-primary)' }}>AI Threat Assessment</div>
-              <div style={{ fontSize: '11px', color: 'var(--text-tertiary)' }}>Powered by {sourceModel} · Confidence: {confidence}</div>
+              <div style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text-primary)', fontFamily: "'Space Grotesk', sans-serif" }}>Cognitive Threat Assessment</div>
+              <div style={{ fontSize: '11px', color: 'var(--text-tertiary)', fontWeight: '500' }}>Powered by {sourceModel} · Confidence: {confidence}</div>
             </div>
-            <span style={{ marginLeft: 'auto', padding: '3px 9px', borderRadius: '99px', background: 'var(--accent-dim)', border: '1px solid var(--accent-border)', fontSize: '10px', fontWeight: '600', color: 'var(--accent)' }}>
-              Gemini 2.5 Flash
+            <span style={{ marginLeft: 'auto', padding: '4px 10px', borderRadius: '99px', background: 'var(--accent-dim)', border: '1px solid var(--accent-border)', fontSize: '11px', fontWeight: '700', color: 'var(--accent)' }}>
+              Gemini AI Engine
             </span>
           </div>
           <div style={{
             background: '#0F172A', border: '1px solid rgba(255,106,19,0.15)',
-            borderRadius: '8px', padding: '16px 18px',
+            borderRadius: '10px', padding: '18px 20px',
           }}>
             <pre style={{
-              margin: 0, fontSize: '12px', color: '#94A3B8',
+              margin: 0, fontSize: '12.5px', color: '#E2E8F0',
               lineHeight: '1.9', whiteSpace: 'pre-wrap',
               fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
             }}>
-              <span style={{ color: 'var(--accent)' }}>{analysisText}</span>
+              <span style={{ color: '#F1F5F9' }}>{analysisText}</span>
               <span className="blink">█</span>
             </pre>
           </div>

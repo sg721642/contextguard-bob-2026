@@ -74,15 +74,12 @@ const Sidebar = () => {
         borderBottom: '1px solid rgba(255,255,255,0.06)',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '6px' }}>
-          {/* Official Bank of Baroda "B" logo (48px tall, crisp, transparent background) */}
-          <svg width="48" height="48" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ flexShrink: 0 }}>
-            <path d="M45 22 L15 25 L45 34 Z" fill="#FF6A13" />
-            <path d="M45 36 L8 47 L45 56 Z" fill="#FF6A13" />
-            <path d="M45 58 L5 70 L45 78 Z" fill="#FF6A13" />
-            <path d="M45 80 L10 91 L45 98 Z" fill="#FF6A13" />
-            <path d="M45 100 L20 109 L45 112 Z" fill="#FF6A13" />
-            <path fillRule="evenodd" clipRule="evenodd" d="M45,15 h35 c12,0 20,8 20,20 c0,11 -8,19 -20,19 h-35 Z M60,27 h17 c6,0 10,3 10,8 c0,5 -4,8 -10,8 h-17 Z M45,54 h40 c12,0 20,8 20,21 c0,13 -8,21 -20,21 h-40 Z M60,66 h22 c6,0 10,4 10,9 c0,5 -4,9 -10,9 h-22 Z" fill="#FF6A13" />
-          </svg>
+          {/* Official Bank of Baroda "B" logo asset (48px tall, transparent background, aspect ratio preserved) */}
+          <img 
+            src="/bob-logo.png" 
+            alt="Bank of Baroda" 
+            style={{ height: '48px', objectFit: 'contain', flexShrink: 0 }} 
+          />
           <div>
             <div style={{
               fontSize: '15px', fontWeight: '700', color: '#FFFFFF',
@@ -97,7 +94,7 @@ const Sidebar = () => {
           </div>
         </div>
         
-        {/* Navigation / Brand sub-label logo (matching design consistently) */}
+        {/* Navigation / Brand sub-label logo (18px tall, matching brand asset consistently) */}
         <div style={{
           marginTop: '12px',
           padding: '8px 12px',
@@ -106,14 +103,11 @@ const Sidebar = () => {
           border: '1px solid rgba(255,106,19,0.15)',
           display: 'flex', alignItems: 'center', gap: '8px',
         }}>
-          <svg width="20" height="20" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ flexShrink: 0 }}>
-            <path d="M45 22 L15 25 L45 34 Z" fill="#FF6A13" />
-            <path d="M45 36 L8 47 L45 56 Z" fill="#FF6A13" />
-            <path d="M45 58 L5 70 L45 78 Z" fill="#FF6A13" />
-            <path d="M45 80 L10 91 L45 98 Z" fill="#FF6A13" />
-            <path d="M45 100 L20 109 L45 112 Z" fill="#FF6A13" />
-            <path fillRule="evenodd" clipRule="evenodd" d="M45,15 h35 c12,0 20,8 20,20 c0,11 -8,19 -20,19 h-35 Z M60,27 h17 c6,0 10,3 10,8 c0,5 -4,8 -10,8 h-17 Z M45,54 h40 c12,0 20,8 20,21 c0,13 -8,21 -20,21 h-40 Z M60,66 h22 c6,0 10,4 10,9 c0,5 -4,9 -10,9 h-22 Z" fill="#FF6A13" />
-          </svg>
+          <img 
+            src="/bob-logo.png" 
+            alt="Bank of Baroda" 
+            style={{ height: '18px', objectFit: 'contain', flexShrink: 0 }} 
+          />
           <span style={{
             fontSize: '10px', color: 'rgba(255,255,255,0.6)',
             fontFamily: "'Inter', sans-serif", fontWeight: '600',
